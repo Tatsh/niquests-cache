@@ -1,3 +1,4 @@
+Ångström
 appauthor
 appimage
 asyncio
@@ -99,4 +100,3 @@ wiswa's
 yapf
 yapfignore
 yarnrc
-Ångström
