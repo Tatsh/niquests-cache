@@ -1,4 +1,3 @@
-Ångström
 appauthor
 appimage
 asyncio
@@ -91,6 +90,7 @@ tomllib
 tryfirst
 ubyte
 udvare
+usefixtures
 vendored
 venv
 virtualenv
@@ -99,3 +99,4 @@ wiswa's
 yapf
 yapfignore
 yarnrc
+Ångström
