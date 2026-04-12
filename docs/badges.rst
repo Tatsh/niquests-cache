@@ -16,8 +16,8 @@
       :target: https://github.com/Tatsh/niquests-cache/blob/master/LICENSE.txt
       :alt: License
 
-   .. image:: https://img.shields.io/github/commits-since/Tatsh/niquests-cache/v0.0.2/master
-      :target: https://github.com/Tatsh/niquests-cache/compare/v0.0.2...master
+   .. image:: https://img.shields.io/github/commits-since/Tatsh/niquests-cache/v0.0.3/master
+      :target: https://github.com/Tatsh/niquests-cache/compare/v0.0.3...master
       :alt: GitHub commits since latest release (by SemVer including pre-releases)
 
    .. image:: https://github.com/Tatsh/niquests-cache/actions/workflows/codeql.yml/badge.svg
