@@ -263,15 +263,15 @@ def cached_session(
         First argument to :func:`platformdirs.user_cache_path` for the cache root. If ``None``,
         uses ``niquests-cache``. Cached entries live under ``<user cache path> / 'http'``.
     expire_after : timedelta
-        Cache expiry duration (ignored when *no_cache* is ``True``).
+        Cache expiry duration (ignored when ``no_cache`` is ``True``).
 
     Returns
     -------
     CachedSession | CachedAsyncSession | niquests.Session | niquests.AsyncSession
         A plain :py:class:`~niquests.Session` or :py:class:`~niquests.AsyncSession`
-        when *no_cache* is ``True`` (depending on *aio*); otherwise a
+        when ``no_cache`` is ``True`` (depending on ``aio``); otherwise a
         :py:class:`CachedSession` or :py:class:`CachedAsyncSession`. Use an async
-        context manager when *aio* is ``True``.
+        context manager when ``aio`` is ``True``.
     """
     if no_cache:
         return niquests.AsyncSession() if aio else niquests.Session()
