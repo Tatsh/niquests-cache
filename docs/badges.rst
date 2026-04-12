@@ -68,8 +68,8 @@
       :target: https://github.com/Tatsh/niquests-cache/stargazers
       :alt: Stargazers
 
-   .. image:: https://img.shields.io/badge/pre--commit-brightgreen?logo=pre-commit&logoColor=white
-      :target: https://pre-commit.com/
+   .. image:: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit
+      :target: https://github.com/pre-commit/pre-commit
       :alt: pre-commit
 
    .. image:: https://img.shields.io/badge/Prettier-black?logo=prettier
