@@ -9,6 +9,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+### Changed
+
+- `cached_session` overloads for a generic `no_cache` `bool` so type checkers return the same session
+  unions as the implementation.
+
 ## [0.0.2] - 2026-04-11
 
 ### Added

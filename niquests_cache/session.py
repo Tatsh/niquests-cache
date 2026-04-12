@@ -243,6 +243,32 @@ def cached_session(
     ...
 
 
+# For the following cases it is impossible to know which type will be returned, so only return the
+# parent classes.
+
+
+@overload
+def cached_session(
+    *,
+    aio: Literal[False] = ...,
+    no_cache: bool = ...,
+    app_name: str | None = ...,
+    expire_after: timedelta = ...,
+) -> niquests.Session:
+    ...
+
+
+@overload
+def cached_session(
+    *,
+    aio: Literal[True],
+    no_cache: bool = ...,
+    app_name: str | None = ...,
+    expire_after: timedelta = ...,
+) -> niquests.AsyncSession:
+    ...
+
+
 def cached_session(
     *,
     aio: bool = False,
