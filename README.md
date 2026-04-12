@@ -6,7 +6,7 @@
 [![PyPI - Version](https://img.shields.io/pypi/v/niquests-cache)](https://pypi.org/project/niquests-cache/)
 [![GitHub tag (with filter)](https://img.shields.io/github/v/tag/Tatsh/niquests-cache)](https://github.com/Tatsh/niquests-cache/tags)
 [![License](https://img.shields.io/github/license/Tatsh/niquests-cache)](https://github.com/Tatsh/niquests-cache/blob/master/LICENSE.txt)
-[![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/Tatsh/niquests-cache/v0.0.1/master)](https://github.com/Tatsh/niquests-cache/compare/v0.0.1...master)
+[![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/Tatsh/niquests-cache/v0.0.2/master)](https://github.com/Tatsh/niquests-cache/compare/v0.0.2...master)
 [![CodeQL](https://github.com/Tatsh/niquests-cache/actions/workflows/codeql.yml/badge.svg)](https://github.com/Tatsh/niquests-cache/actions/workflows/codeql.yml)
 [![QA](https://github.com/Tatsh/niquests-cache/actions/workflows/qa.yml/badge.svg)](https://github.com/Tatsh/niquests-cache/actions/workflows/qa.yml)
 [![Tests](https://github.com/Tatsh/niquests-cache/actions/workflows/tests.yml/badge.svg)](https://github.com/Tatsh/niquests-cache/actions/workflows/tests.yml)
