@@ -22,20 +22,20 @@ def _cached_entry_path(cache_dir: Path, method: str, url: str) -> Path:
     return cache_dir / digest
 
 
-def test_cached_session_returns_cached_session(mocker: MockerFixture) -> None:
-    mocker.patch('niquests_cache.session.platformdirs.user_cache_path')
+@pytest.mark.usefixtures('mock_user_cache_path')
+def test_cached_session_returns_cached_session() -> None:
     session = cached_session()
     assert isinstance(session, CachedSession)
 
 
-def test_cached_session_aio_returns_cached_async_session(mocker: MockerFixture) -> None:
-    mocker.patch('niquests_cache.session.platformdirs.user_cache_path')
+@pytest.mark.usefixtures('mock_user_cache_path')
+def test_cached_session_aio_returns_cached_async_session() -> None:
     session = cached_session(aio=True)
     assert isinstance(session, CachedAsyncSession)
 
 
-def test_cached_session_expire_after_is_10_minutes(mocker: MockerFixture) -> None:
-    mocker.patch('niquests_cache.session.platformdirs.user_cache_path')
+@pytest.mark.usefixtures('mock_user_cache_path')
+def test_cached_session_expire_after_is_10_minutes() -> None:
     session = cached_session()
     assert isinstance(session, CachedSession)
     assert session.expire_after_total_seconds == timedelta(minutes=10).total_seconds()
@@ -77,20 +77,18 @@ def test_cached_session_custom_app_name_aio(tmp_path: Path, mocker: MockerFixtur
     mock_pd.assert_called_once_with('my-tool', appauthor=False, ensure_exists=True)
 
 
-def test_cached_session_no_cache_returns_plain_session(mocker: MockerFixture) -> None:
-    mocker.patch('niquests_cache.session.platformdirs.user_cache_path')
+def test_cached_session_no_cache_returns_plain_session() -> None:
     session = cached_session(no_cache=True)
     assert type(session) is niquests.Session
 
 
-def test_cached_session_no_cache_aio_returns_plain_async_session(mocker: MockerFixture) -> None:
-    mocker.patch('niquests_cache.session.platformdirs.user_cache_path')
+def test_cached_session_no_cache_aio_returns_plain_async_session() -> None:
     session = cached_session(aio=True, no_cache=True)
     assert type(session) is niquests.AsyncSession
 
 
-def test_cached_session_custom_expire_after(mocker: MockerFixture) -> None:
-    mocker.patch('niquests_cache.session.platformdirs.user_cache_path')
+@pytest.mark.usefixtures('mock_user_cache_path')
+def test_cached_session_custom_expire_after() -> None:
     session = cached_session(expire_after=timedelta(hours=1))
     assert isinstance(session, CachedSession)
     assert session.expire_after_total_seconds == pytest.approx(3600.0)
