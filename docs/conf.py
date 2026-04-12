@@ -74,4 +74,8 @@ html_theme_options = {
     'site_url': 'https://niquests-cache.readthedocs.org',
     'toc_title_is_page_title': True
 }
-intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+intersphinx_mapping = {
+    'niquests': ('https://niquests.readthedocs.io/en/latest', None),
+    'platformdirs': ('https://platformdirs.readthedocs.io/en/latest', None),
+    'python': ('https://docs.python.org/3', None),
+}
