@@ -6,7 +6,7 @@ from hashlib import sha256
 from os import PathLike
 from pathlib import Path
 from time import time
-from typing import Any, cast
+from typing import Any, Literal, TypeAlias, cast, overload
 import contextlib
 import json
 import logging
@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 _DEFAULT_EXPIRE = timedelta(minutes=10)
 
-StrPath = str | PathLike[str]
+StrPath: TypeAlias = str | PathLike[str]
 
 
 def _cache_key(cache_dir: Path, method: str, url: str) -> Path:
@@ -105,6 +105,17 @@ class CachedSession(niquests.Session):
         """
         Send a request, returning a cached response when available.
 
+        Parameters
+        ----------
+        method : str
+            The HTTP method.
+        url : str
+            The URL.
+        expire_after : float | None
+            Override cache expiry for this request. Set to ``0`` to bypass the cache.
+        **kwargs : Any
+            Additional keyword arguments passed to the parent.
+
         Returns
         -------
         niquests.Response
@@ -188,13 +199,57 @@ class CachedAsyncSession(niquests.AsyncSession):
         return resp
 
 
+@overload
+def cached_session(
+    *,
+    aio: Literal[False] = ...,
+    no_cache: Literal[True],
+    app_name: str | None = ...,
+    expire_after: timedelta = ...,
+) -> niquests.Session:
+    ...
+
+
+@overload
+def cached_session(
+    *,
+    aio: Literal[True],
+    no_cache: Literal[True],
+    app_name: str | None = ...,
+    expire_after: timedelta = ...,
+) -> niquests.AsyncSession:
+    ...
+
+
+@overload
+def cached_session(
+    *,
+    aio: Literal[True],
+    no_cache: Literal[False] = ...,
+    app_name: str | None = ...,
+    expire_after: timedelta = ...,
+) -> CachedAsyncSession:
+    ...
+
+
+@overload
+def cached_session(
+    *,
+    aio: Literal[False] = ...,
+    no_cache: Literal[False] = ...,
+    app_name: str | None = ...,
+    expire_after: timedelta = ...,
+) -> CachedSession:
+    ...
+
+
 def cached_session(
     *,
     aio: bool = False,
     no_cache: bool = False,
     app_name: str | None = None,
     expire_after: timedelta = _DEFAULT_EXPIRE,
-) -> niquests.Session | niquests.AsyncSession:
+) -> niquests.Session | niquests.AsyncSession | CachedSession | CachedAsyncSession:
     """
     Get a niquests session, optionally with filesystem caching.
 
@@ -212,8 +267,11 @@ def cached_session(
 
     Returns
     -------
-    niquests.Session | niquests.AsyncSession
-        A session instance (use async context manager when *aio* is ``True``).
+    CachedSession | CachedAsyncSession | niquests.Session | niquests.AsyncSession
+        A plain :py:class:`~niquests.Session` or :py:class:`~niquests.AsyncSession`
+        when *no_cache* is ``True`` (depending on *aio*); otherwise a
+        :py:class:`CachedSession` or :py:class:`CachedAsyncSession`. Use an async
+        context manager when *aio* is ``True``.
     """
     if no_cache:
         return niquests.AsyncSession() if aio else niquests.Session()
