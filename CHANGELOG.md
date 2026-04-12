@@ -9,9 +9,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
-## [0.0.1] - 2026-00-00
+## [0.0.1] - 2026-04-11
 
-First version.
+### Added
 
-[unreleased]: https://github.com/Tatsh/niquests-cache/compare/v0.0.0...HEAD
-[0.0.1]: https://github.com/Tatsh/niquests-cache/releases/tag/v0.0.0
+- `CachedSession` and `CachedAsyncSession` for filesystem-backed caching of successful `GET` and
+  `HEAD` responses.
+- `cached_session()` helper with optional `app_name` (for `platformdirs.user_cache_path`), `aio`,
+  `no_cache`, and `expire_after`.
+
+[unreleased]: https://github.com/Tatsh/niquests-cache/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/Tatsh/niquests-cache/releases/tag/v0.0.1
