@@ -94,7 +94,7 @@ class CachedSession(niquests.Session):
         """Cache TTL in seconds for GET and HEAD responses."""
         return self._expire_seconds
 
-    def request(  # type: ignore[override]
+    def request(  # type: ignore[override]  # ty: ignore[invalid-method-override]
         self,
         method: str,
         url: str,
@@ -158,7 +158,7 @@ class CachedAsyncSession(niquests.AsyncSession):
         """Cache TTL in seconds for GET and HEAD responses."""
         return self._expire_seconds
 
-    async def request(  # type: ignore[override]
+    async def request(  # type: ignore[override]  # ty: ignore[invalid-method-override]
         self,
         method: str,
         url: str,
