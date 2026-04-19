@@ -9,6 +9,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+## [0.1.0] - 2026-04-18
+
 ### Added
 
 - Pluggable storage backends in `niquests_cache.backends`: `BaseBackend` ABC, `FileCache`,
@@ -54,6 +56,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `niquests_cache.serializers`, `niquests_cache.settings`, `niquests_cache.typing`).
 - Project description updated to "Cached niquests sessions with pluggable storage backends."
 
+### Fixed
+
+- Decode `bytes`-typed response header values to `str` before populating the cache entry so the
+  entry round-trips through the JSON serializer cleanly.
+
 ### Removed
 
 - `CachedAsyncSession` alias (replaced by `AsyncCachedSession`).
@@ -89,7 +96,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `cached_session()` helper with optional `app_name` (for `platformdirs.user_cache_path`), `aio`,
   `no_cache`, and `expire_after`.
 
-[unreleased]: https://github.com/Tatsh/niquests-cache/compare/v0.0.3...HEAD
+[unreleased]: https://github.com/Tatsh/niquests-cache/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Tatsh/niquests-cache/compare/v0.0.3...v0.1.0
 [0.0.3]: https://github.com/Tatsh/niquests-cache/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/Tatsh/niquests-cache/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/Tatsh/niquests-cache/releases/tag/v0.0.1
