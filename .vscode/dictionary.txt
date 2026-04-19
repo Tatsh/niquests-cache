@@ -36,6 +36,7 @@ elif
 esbenp
 esbonio
 excinfo
+finalizer
 foxundermoon
 functools
 genindex
