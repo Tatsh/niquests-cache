@@ -9,6 +9,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+### Removed
+
+- `JsonSerializer` deprecated subclass from `niquests_cache.serializers`. Use `JSONSerializer`
+  instead.
+
 ## [0.1.1] - 2026-04-18
 
 ### Changed

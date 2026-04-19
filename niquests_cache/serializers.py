@@ -1,11 +1,10 @@
 """Built-in serialisers for cache entries."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 import base64
 import json
 import pickle  # noqa: S403
-import warnings
 
 if TYPE_CHECKING:
     from niquests_cache.typing import CacheEntry, Serializer
@@ -50,20 +49,6 @@ class JSONSerializer:
         decoded = json.loads(data)
         decoded['content'] = base64.b64decode(decoded['content'])
         return cast('CacheEntry', decoded)
-
-
-class JsonSerializer(JSONSerializer):  # pragma: no cover
-    """
-    Deprecated alias for :py:class:`JSONSerializer`.
-
-    .. deprecated::
-        Use :py:class:`JSONSerializer` instead.
-    """
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        warnings.warn('`JsonSerializer` is deprecated; use `JSONSerializer` instead.',
-                      DeprecationWarning,
-                      stacklevel=2)
-        super().__init__(*args, **kwargs)
 
 
 class PickleSerializer:
