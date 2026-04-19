@@ -9,7 +9,7 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "2026-04-12T00:45:25.702906683Z"
+exclude-newer = "2026-04-12T01:03:07.150706652Z"
 exclude-newer-span = "P1W"
 
 [[package]]
@@ -1196,7 +1196,7 @@ wheels = [
 
 [[package]]
 name = "niquests-cache"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
