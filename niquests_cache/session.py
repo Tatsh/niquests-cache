@@ -154,10 +154,14 @@ def _response_from_entry(data: CacheEntry) -> niquests.Response:
 
 
 def _entry_from_response(resp: niquests.Response) -> CacheEntry:
+    raw_headers = cast('dict[str, str | bytes]', dict(resp.headers))
     return {
         'content': resp.content or b'',
         'encoding': resp.encoding or 'utf-8',
-        'headers': dict(resp.headers),
+        'headers': {
+            k: v if isinstance(v, str) else v.decode()
+            for k, v in raw_headers.items()
+        },
         'status_code': resp.status_code or 0,
         'ts': time(),
         'url': str(resp.url),
@@ -319,7 +323,7 @@ class CachedSession(CacheMixin, niquests.Session):
         finally:
             self.settings.disabled = prev
 
-    def request(  # type: ignore[override]  # ty: ignore[invalid-method-override]
+    def request(  # type: ignore[override]
         self,
         method: str,
         url: str,
@@ -400,7 +404,7 @@ class AsyncCachedSession(CacheMixin, niquests.AsyncSession):
         finally:
             self.settings.disabled = prev
 
-    async def request(  # type: ignore[override]  # ty: ignore[invalid-method-override]
+    async def request(  # type: ignore[override] # ty: ignore[invalid-method-override]
         self,
         method: str,
         url: str,
