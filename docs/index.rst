@@ -3,17 +3,18 @@ niquests-cache
 
 .. include:: badges.rst
 
-Filesystem-cached niquests sessions.
+Cached :mod:`niquests` sessions with pluggable storage backends.
 
 Example usage
 -------------
 
 The :func:`cached_session <niquests_cache.session.cached_session>` helper returns a
 :class:`CachedSession <niquests_cache.session.CachedSession>` or
-:class:`CachedAsyncSession <niquests_cache.session.CachedAsyncSession>` whose cache root is
-``platformdirs.user_cache_path(app_name, appauthor=False) / 'http'``. If you omit ``app_name``,
-``niquests-cache`` is used. Only successful ``GET`` and ``HEAD`` responses are stored; the
-default TTL is 10 minutes (``expire_after=`` on the helper, or per request—see below).
+:class:`AsyncCachedSession <niquests_cache.session.AsyncCachedSession>` whose cache database is
+``platformdirs.user_cache_path(app_name, appauthor=False) / 'http.sqlite'``. If you omit
+``app_name``, ``niquests-cache`` is used. Only successful ``GET`` and ``HEAD`` responses are
+stored; the default TTL is 10 minutes (``expire_after=`` on the helper, or per request—see
+below).
 
 Sync helper (default application name and TTL):
 
@@ -25,7 +26,7 @@ Sync helper (default application name and TTL):
    response = session.get('https://httpbin.org/get')
    response.raise_for_status()
 
-Custom ``app_name`` for ``platformdirs.user_cache_path`` (same ``http`` subdirectory):
+Custom ``app_name`` for ``platformdirs.user_cache_path``:
 
 .. code-block:: python
 
@@ -35,7 +36,7 @@ Custom ``app_name`` for ``platformdirs.user_cache_path`` (same ``http`` subdirec
    response = session.get('https://httpbin.org/get')
    response.raise_for_status()
 
-Plain niquests session with no filesystem cache:
+Plain niquests session with no caching:
 
 .. code-block:: python
 
@@ -43,7 +44,7 @@ Plain niquests session with no filesystem cache:
 
    session = cached_session(no_cache=True)
 
-Construct ``CachedSession`` when you need an explicit directory:
+Construct ``CachedSession`` when you need an explicit cache name or backend:
 
 .. code-block:: python
 
@@ -51,8 +52,7 @@ Construct ``CachedSession`` when you need an explicit directory:
 
    from niquests_cache import CachedSession
 
-   cache = Path('.cache') / 'http'
-   with CachedSession(cache_dir=cache) as session:
+   with CachedSession(cache_name=Path('.cache') / 'http') as session:
        response = session.get('https://httpbin.org/get')
        response.raise_for_status()
 
@@ -72,30 +72,68 @@ Async helper (async context manager):
 
    asyncio.run(main())
 
-Or construct ``CachedAsyncSession`` directly:
+Or construct ``AsyncCachedSession`` directly:
 
 .. code-block:: python
 
    import asyncio
-   from datetime import timedelta
    from pathlib import Path
 
-   from niquests_cache import CachedAsyncSession
+   from niquests_cache import AsyncCachedSession
 
    async def main() -> None:
-       cache = Path('.cache') / 'http'
-       async with CachedAsyncSession(cache_dir=cache, expire_after=timedelta(hours=1)) as session:
+       async with AsyncCachedSession(cache_name=Path('.cache') / 'http') as session:
            response = await session.get('https://httpbin.org/get')
            response.raise_for_status()
 
    asyncio.run(main())
 
-To bypass the cache for one request, pass ``expire_after=0`` to ``request`` (that ``GET`` or
-``HEAD`` is not read from or written to the cache).
+Pick a non-default backend by alias or instance:
+
+.. code-block:: python
+
+   from niquests_cache import CachedSession
+   from niquests_cache.backends import FileCache, MemoryBackend
+
+   # Built-in aliases: 'sqlite' (default), 'filesystem', 'memory'.
+   session = CachedSession(backend='filesystem', cache_name='./fs-cache')
+
+   # Or pass a backend instance directly.
+   session = CachedSession(backend=MemoryBackend())
+
+   # FileCache with a non-default serialiser:
+   session = CachedSession(backend=FileCache('./fs-cache', serializer='pickle'))
+
+To bypass the cache read for one request, pass ``force_refresh=True`` to ``request()``; to return
+a synthesised ``504`` when no cached entry exists, pass ``only_if_cached=True``.
+
+API reference
+-------------
 
 .. only:: html
 
    .. automodule:: niquests_cache.session
+      :members:
+
+   .. automodule:: niquests_cache.backends.base
+      :members:
+
+   .. automodule:: niquests_cache.backends.file
+      :members:
+
+   .. automodule:: niquests_cache.backends.memory
+      :members:
+
+   .. automodule:: niquests_cache.backends.sqlite
+      :members:
+
+   .. automodule:: niquests_cache.serializers
+      :members:
+
+   .. automodule:: niquests_cache.settings
+      :members:
+
+   .. automodule:: niquests_cache.typing
       :members:
 
    Indices and tables

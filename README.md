@@ -30,7 +30,8 @@
 
 <!-- WISWA-GENERATED-README:STOP -->
 
-Filesystem-cached niquests sessions.
+Cached [niquests](https://niquests.readthedocs.io) sessions with pluggable storage backends.
+SQLite is the default; filesystem and in-memory backends are also built in.
 
 ## Installation
 
@@ -40,10 +41,11 @@ pip install niquests-cache
 
 ## Example usage
 
-The `cached_session()` helper returns a `CachedSession` or `CachedAsyncSession` whose cache root
-is `platformdirs.user_cache_path(app_name, appauthor=False) / 'http'`. If you omit `app_name`,
-`niquests-cache` is used. Only successful `GET` and `HEAD` responses are written to disk; the
-default time-to-live is 10 minutes (`expire_after=` on the helper, or per-request—see below).
+The `cached_session()` helper returns a `CachedSession` or `AsyncCachedSession` whose cache
+database is `platformdirs.user_cache_path(app_name, appauthor=False) / 'http.sqlite'`. If you
+omit `app_name`, `niquests-cache` is used. Only successful `GET` and `HEAD` responses are
+written; the default time-to-live is 10 minutes (`expire_after=` on the helper, or per-request—
+see below).
 
 Sync helper (default app name and TTL):
 
@@ -55,7 +57,7 @@ response = session.get('https://httpbin.org/get')
 response.raise_for_status()
 ```
 
-Custom application name for `user_cache_path` (same `http` subdirectory):
+Custom application name for `user_cache_path`:
 
 ```python
 from niquests_cache import cached_session
@@ -65,7 +67,7 @@ response = session.get('https://httpbin.org/get')
 response.raise_for_status()
 ```
 
-Plain niquests session with no filesystem cache:
+Plain niquests session with no caching:
 
 ```python
 from niquests_cache import cached_session
@@ -73,7 +75,7 @@ from niquests_cache import cached_session
 session = cached_session(no_cache=True)
 ```
 
-Construct `CachedSession` when you need an explicit directory or TTL:
+Construct `CachedSession` when you need an explicit cache name or TTL:
 
 ```python
 from datetime import timedelta
@@ -81,8 +83,8 @@ from pathlib import Path
 
 from niquests_cache import CachedSession
 
-cache = Path('.cache') / 'http'
-with CachedSession(cache_dir=cache, expire_after=timedelta(hours=1)) as session:
+with CachedSession(cache_name=Path('.cache') / 'http',
+                   expire_after=timedelta(hours=1)) as session:
     response = session.get('https://httpbin.org/get')
     response.raise_for_status()
 ```
@@ -96,31 +98,80 @@ from datetime import timedelta
 from niquests_cache import cached_session
 
 async def main() -> None:
-    session = cached_session(aio=True, expire_after=timedelta(minutes=30))
-    async with session:
+    async with cached_session(aio=True, expire_after=timedelta(minutes=30)) as session:
         response = await session.get('https://httpbin.org/get')
         response.raise_for_status()
 
 asyncio.run(main())
 ```
 
-Or construct `CachedAsyncSession` directly:
+Or construct `AsyncCachedSession` directly:
 
 ```python
 import asyncio
 from datetime import timedelta
 from pathlib import Path
 
-from niquests_cache import CachedAsyncSession
+from niquests_cache import AsyncCachedSession
 
 async def main() -> None:
-    cache = Path('.cache') / 'http'
-    async with CachedAsyncSession(cache_dir=cache, expire_after=timedelta(hours=1)) as session:
+    async with AsyncCachedSession(cache_name=Path('.cache') / 'http',
+                                  expire_after=timedelta(hours=1)) as session:
         response = await session.get('https://httpbin.org/get')
         response.raise_for_status()
 
 asyncio.run(main())
 ```
 
-To bypass the cache for a single request, pass `expire_after=0` to `request` (that `GET` or
-`HEAD` is not served from or written to the cache).
+## Choosing a backend
+
+Pass `backend=` as one of the built-in aliases (`'sqlite'` (default), `'filesystem'`, `'memory'`)
+or a `BaseBackend` instance:
+
+```python
+from niquests_cache import CachedSession
+from niquests_cache.backends import FileCache, MemoryBackend
+
+# Filesystem backend with custom cache directory:
+session = CachedSession(backend='filesystem', cache_name='./fs-cache')
+
+# In-memory (per-process) cache:
+session = CachedSession(backend=MemoryBackend())
+
+# FileCache with the pickle serializer (preserves binary content natively):
+session = CachedSession(backend=FileCache('./fs-cache', serializer='pickle'))
+```
+
+The `AsyncCachedSession` uses [aiosqlite](https://github.com/omnilib/aiosqlite) for SQLite and
+[anyio](https://anyio.readthedocs.io) for filesystem I/O so async requests do not block the event
+loop.
+
+## Per-request controls
+
+`request()` accepts `expire_after`, `only_if_cached`, `refresh`, and `force_refresh` per call:
+
+```python
+# Bypass the cache read and replace any stored entry:
+session.get('https://httpbin.org/get', force_refresh=True)
+
+# Return a synthesised 504 if the entry is missing instead of going to the network:
+session.get('https://httpbin.org/get', only_if_cached=True)
+
+# Override the session-wide TTL for one request:
+session.get('https://httpbin.org/get', expire_after=60)
+```
+
+## Cache key behaviour
+
+By default the cache key is `sha256(method + url + '')` — request headers are not part of the
+key. Pass `match_headers=True` to include all session/request headers, or
+`match_headers=('Accept', 'Accept-Language')` to include only the listed names. Strip query-string
+parameters from the key with `ignored_parameters=('access_token', ...)`. Provide a `key_fn=` to
+replace key generation entirely.
+
+## Settings
+
+All session settings live on the mutable `session.settings` dataclass
+(`niquests_cache.settings.CacheSettings`); change them at runtime, for example
+`session.settings.expire_after = 360` or `session.settings.read_only = True`. Use
+`with session.cache_disabled():` to suspend caching for a block.
