@@ -45,8 +45,14 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
   "Typing :: Typed",
 ]
-dependencies = ["niquests>=3.18.4", "platformdirs>=4.9.4", "typing-extensions>=4.15.0"]
-description = "Filesystem-cached niquests sessions."
+dependencies = [
+  "aiosqlite>=0.20.0",
+  "anyio>=4.4.0",
+  "niquests>=3.18.4",
+  "platformdirs>=4.9.4",
+  "typing-extensions>=4.15.0",
+]
+description = "Cached niquests sessions with pluggable storage backends."
 keywords = ["cache", "filesystem", "http", "niquests"]
 license = "MIT"
 name = "niquests-cache"
@@ -81,12 +87,24 @@ version_provider = "pep621"
 
 [tool.coverage.report]
 exclude_also = ["if TYPE_CHECKING:"]
-omit = ["conftest.py", "tests.py", "tests/*/test_*.py", "tests/test_*.py"]
+omit = [
+  "conftest.py",
+  "niquests_cache/typing.py",
+  "tests.py",
+  "tests/*/test_*.py",
+  "tests/test_*.py",
+]
 show_missing = true
 
 [tool.coverage.run]
 branch = true
-omit = ["conftest.py", "tests.py", "tests/*/test_*.py", "tests/test_*.py"]
+omit = [
+  "conftest.py",
+  "niquests_cache/typing.py",
+  "tests.py",
+  "tests/*/test_*.py",
+  "tests/test_*.py",
+]
 
 [tool.doc8]
 max-line-length = 100

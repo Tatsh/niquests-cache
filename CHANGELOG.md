@@ -9,6 +9,49 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+### Added
+
+- Pluggable storage backends in `niquests_cache.backends`: `BaseBackend` ABC, `FileCache`,
+  `MemoryBackend`, and `SQLiteBackend`.
+- Serializers in `niquests_cache.serializers`: `JsonSerializer` (default, base64-encodes binary
+  content) and `PickleSerializer`. Custom serializers are supported via a duck-typed `dumps`/`loads`
+  protocol.
+- `CacheSettings` dataclass exposing all session settings as a mutable `session.settings`
+  attribute.
+- `CacheMixin` public mixin class for subclassing.
+- `cache_disabled()` context manager (sync and async variants) to temporarily bypass the cache.
+- `session.cache` and `session.backend` properties on cached sessions.
+- Per-request keyword arguments `only_if_cached`, `refresh`, and `force_refresh` on `request()`.
+- `CachedSession` and `AsyncCachedSession` now accept the full requests-cache-style API:
+  positional `cache_name` and `backend`, plus keyword `serializer`, `expire_after`,
+  `urls_expire_after`, `cache_control`, `content_root_key`, `allowable_codes`,
+  `allowable_methods`, `always_revalidate`, `ignored_parameters`, `match_headers`, `filter_fn`,
+  `key_fn`, `read_only`, `stale_if_error`, and `autoclose`.
+- Debug logging of the selected backend at session construction.
+- New runtime dependencies: `aiosqlite>=0.20` and `anyio>=4.4`.
+
+### Changed
+
+- Default storage backend is now SQLite (was filesystem). The SQLite backend stores entries in
+  typed columns (`key`, `content` as `BLOB`, `encoding`, `headers` JSON, `status_code`, `ts`,
+  `url`) and handles binary responses natively.
+- `FileCache` matches the requests-cache `FileCache` API: `cache_name`, `use_temp`,
+  `use_cache_dir`, `extension`, `lock`, and `serializer`. Asynchronous `aget`/`aset` use anyio for
+  non-blocking I/O.
+- `AsyncCachedSession` uses aiosqlite for SQLite and anyio for filesystem backends.
+- `CacheEntry.content` is now `bytes` (was `str`) to support binary responses.
+- Cache key now incorporates the request method, the URL (with `ignored_parameters` stripped),
+  and optional request headers (per the `match_headers` setting).
+- Renamed `CachedAsyncSession` to `AsyncCachedSession`.
+- The top-level package re-exports only `AsyncCachedSession`, `CachedSession`, and
+  `cached_session`. Other types are accessed via submodules (`niquests_cache.backends`,
+  `niquests_cache.serializers`, `niquests_cache.settings`, `niquests_cache.typing`).
+- Project description updated to "Cached niquests sessions with pluggable storage backends."
+
+### Removed
+
+- `CachedAsyncSession` alias (replaced by `AsyncCachedSession`).
+
 ## [0.0.3] - 2026-04-11
 
 ### Changed

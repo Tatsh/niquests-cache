@@ -34,7 +34,7 @@
     ],
     "useGitignore": true
   },
-  "description": "Filesystem-cached niquests sessions.",
+  "description": "Cached niquests sessions with pluggable storage backends.",
   "devDependencies": {
     "@prettier/plugin-xml": "^3.4.2",
     "cspell": "^10.0.0",

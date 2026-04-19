@@ -1,7 +1,7 @@
-"""Filesystem-cached :mod:`niquests` sessions."""
+"""Cached :mod:`niquests` sessions with pluggable storage backends."""
 from __future__ import annotations
 
-from niquests_cache.session import CachedAsyncSession, CachedSession, cached_session
+from niquests_cache.session import AsyncCachedSession, CachedSession, cached_session
 
-__all__ = ('CachedAsyncSession', 'CachedSession', 'cached_session')
+__all__ = ('AsyncCachedSession', 'CachedSession', 'cached_session')
 __version__ = '0.0.3'

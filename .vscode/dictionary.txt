@@ -1,3 +1,7 @@
+aget
+aiosqlite
+anyio
+aset
 Ångström
 appauthor
 appimage
@@ -15,10 +19,14 @@ coveragerc
 coverallsapp
 ctypes
 dashcam
+dataclass
 dataclasses
 datatable
 datatables
 debugpy
+deserialise
+deserialised
+deserialises
 docstrings
 doctree
 doctrees
@@ -76,6 +84,9 @@ resp
 rstcheck
 schemafile
 sdist
+serialiser
+serialisers
+serialises
 setattr
 shellcheck
 shellformat
@@ -83,6 +94,7 @@ snapcraft
 softprops
 soupsieve
 sphinxcontrib
+subclassing
 tatsh
 testpaths
 timedelta
