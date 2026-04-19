@@ -199,6 +199,13 @@ def test_sqlite_backend_database_property(tmp_path: Path) -> None:
     assert backend.database == db
 
 
+def test_sqlite_backend_close(tmp_path: Path) -> None:
+    backend = SQLiteBackend(tmp_path / 'c.db')
+    backend.close()
+    with pytest.raises(Exception, match='Cannot operate on a closed database'):
+        backend.get('k')
+
+
 async def test_sqlite_backend_aset_aget(tmp_path: Path) -> None:
     backend = SQLiteBackend(tmp_path / 'a.db')
     await backend.aset('k', _entry(b'async-sql'))

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, cast
 import json
 import re
 import sqlite3
+import weakref
 
 from niquests_cache.backends.base import BaseBackend
 from typing_extensions import override
@@ -73,6 +74,11 @@ class SQLiteBackend(BaseBackend):
         self._conn = sqlite3.connect(database)
         self._conn.execute(_SCHEMA.format(table=self._table))
         self._conn.commit()
+        self._finalizer = weakref.finalize(self, self._conn.close)
+
+    def close(self) -> None:
+        """Close the underlying SQLite connection."""
+        self._finalizer()
 
     @property
     def database(self) -> StrPath:
