@@ -66,8 +66,8 @@ def test_file_backend_cache_dir(tmp_path: Path) -> None:
 
 def test_file_cache_serializer_default_is_json(tmp_path: Path) -> None:
     backend = FileCache(tmp_path)
-    from niquests_cache.serializers import JsonSerializer
-    assert isinstance(backend.serializer, JsonSerializer)
+    from niquests_cache.serializers import JSONSerializer
+    assert isinstance(backend.serializer, JSONSerializer)
 
 
 def test_file_cache_serializer_pickle_roundtrip(tmp_path: Path) -> None:

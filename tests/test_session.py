@@ -10,7 +10,7 @@ import re
 
 from niquests_cache import AsyncCachedSession, CachedSession, cached_session
 from niquests_cache.backends import FileCache, MemoryBackend, SQLiteBackend
-from niquests_cache.serializers import JsonSerializer, PickleSerializer
+from niquests_cache.serializers import JSONSerializer, PickleSerializer
 import niquests
 import pytest
 
@@ -153,7 +153,7 @@ def test_cached_session_backend_instance_used_directly() -> None:
 
 def test_cached_session_serializer_default_is_json() -> None:
     session = CachedSession(backend=MemoryBackend())
-    assert isinstance(session.settings.serializer, JsonSerializer)
+    assert isinstance(session.settings.serializer, JSONSerializer)
 
 
 def test_cached_session_serializer_alias_pickle() -> None:

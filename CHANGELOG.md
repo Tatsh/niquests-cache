@@ -9,6 +9,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+### Changed
+
+- Renamed `JsonSerializer` to `JSONSerializer` in `niquests_cache.serializers`.
+
+### Deprecated
+
+- `JsonSerializer` remains as a subclass of `JSONSerializer` and emits a `DeprecationWarning` on
+  instantiation. Use `JSONSerializer` instead.
+
 ## [0.1.0] - 2026-04-18
 
 ### Added

@@ -1,18 +1,19 @@
 """Built-in serialisers for cache entries."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 import base64
 import json
 import pickle  # noqa: S403
+import warnings
 
 if TYPE_CHECKING:
     from niquests_cache.typing import CacheEntry, Serializer
 
-__all__ = ('JsonSerializer', 'PickleSerializer', 'resolve_serializer')
+__all__ = ('JSONSerializer', 'PickleSerializer', 'resolve_serializer')
 
 
-class JsonSerializer:
+class JSONSerializer:
     """Encodes :class:`CacheEntry` as UTF-8 JSON. Binary ``content`` is base64-encoded."""
     def dumps(self, entry: CacheEntry) -> bytes:  # noqa: PLR6301
         """
@@ -49,6 +50,20 @@ class JsonSerializer:
         decoded = json.loads(data)
         decoded['content'] = base64.b64decode(decoded['content'])
         return cast('CacheEntry', decoded)
+
+
+class JsonSerializer(JSONSerializer):  # pragma: no cover
+    """
+    Deprecated alias for :py:class:`JSONSerializer`.
+
+    .. deprecated::
+        Use :py:class:`JSONSerializer` instead.
+    """
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        warnings.warn('`JsonSerializer` is deprecated; use `JSONSerializer` instead.',
+                      DeprecationWarning,
+                      stacklevel=2)
+        super().__init__(*args, **kwargs)
 
 
 class PickleSerializer:
@@ -107,7 +122,7 @@ def resolve_serializer(value: str | Serializer | None) -> Serializer:
         If ``value`` is an unknown alias or lacks ``dumps``/``loads`` methods.
     """
     if value is None or value == 'json':
-        return JsonSerializer()
+        return JSONSerializer()
     if value == 'pickle':
         return PickleSerializer()
     if isinstance(value, str):
