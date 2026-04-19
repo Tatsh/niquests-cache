@@ -80,6 +80,18 @@ def test_cached_session_helper_default_is_sqlite() -> None:
     assert isinstance(session.cache, SQLiteBackend)
 
 
+@pytest.mark.usefixtures('mock_user_cache_path')
+def test_cached_session_helper_backend_alias() -> None:
+    session = cached_session(backend='memory')
+    assert isinstance(session.cache, MemoryBackend)
+
+
+def test_cached_session_helper_backend_instance() -> None:
+    backend = MemoryBackend()
+    session = cached_session(backend=backend)
+    assert session.cache is backend
+
+
 def test_cached_session_uses_user_cache_path(tmp_path: Path, mocker: MockerFixture) -> None:
     fake_root = tmp_path / 'user-cache-root'
     fake_root.mkdir()
@@ -129,7 +141,7 @@ def test_cached_session_backend_alias_sqlite_memory() -> None:
 
 def test_cached_session_unknown_backend_alias() -> None:
     with pytest.raises(ValueError, match='Unknown backend alias'):
-        CachedSession(backend='nope')
+        CachedSession(backend=cast('Any', 'nope'))
 
 
 def test_cached_session_backend_instance_used_directly() -> None:

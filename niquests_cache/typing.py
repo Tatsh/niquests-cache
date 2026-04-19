@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Protocol, TypeAlias, TypedDict, runtime_checkable
+from typing import Literal, Protocol, TypeAlias, TypedDict, runtime_checkable
 
-__all__ = ('CacheEntry', 'ExpireAfter', 'Serializer')
+__all__ = ('BackendAlias', 'CacheEntry', 'ExpireAfter', 'Serializer')
+
+BackendAlias: TypeAlias = Literal['sqlite', 'memory', 'filesystem']
+"""Built-in backend alias names accepted by :class:`~niquests_cache.CachedSession`."""
 
 ExpireAfter: TypeAlias = int | float | str | datetime | timedelta | None
 """Accepted types for the ``expire_after`` parameter."""

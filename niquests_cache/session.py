@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable, Iterable, Iterator, Mapping
 
     from niquests_cache.backends.file import StrPath
-    from niquests_cache.typing import CacheEntry, ExpireAfter, Serializer
+    from niquests_cache.typing import BackendAlias, CacheEntry, ExpireAfter, Serializer
 
 __all__ = ('AsyncCachedSession', 'CacheMixin', 'CachedSession', 'cached_session')
 
@@ -171,7 +171,7 @@ def _log_backend(backend: BaseBackend) -> None:
     log.debug('Using backend `%s`.%s', name, f' Path: {path}' if path else '')
 
 
-def _resolve_backend(backend: BaseBackend | str | None,
+def _resolve_backend(backend: BaseBackend | BackendAlias | None,
                      cache_name: StrPath,
                      serializer: Serializer | str | None = None) -> BaseBackend:
     if backend is None:
@@ -249,7 +249,7 @@ class CacheMixin:
     """Shared state and helpers between sync and async cached sessions."""
     def __init__(self,
                  cache_name: StrPath = 'http_cache',
-                 backend: BaseBackend | str | None = None,
+                 backend: BaseBackend | BackendAlias | None = None,
                  *,
                  serializer: Serializer | str | None = None,
                  expire_after: ExpireAfter = -1,
@@ -468,6 +468,7 @@ def cached_session(
     aio: Literal[False] = ...,
     no_cache: Literal[True],
     app_name: str | None = ...,
+    backend: BaseBackend | BackendAlias | None = ...,
     expire_after: timedelta = ...,
 ) -> niquests.Session:
     ...
@@ -479,6 +480,7 @@ def cached_session(
     aio: Literal[True],
     no_cache: Literal[True],
     app_name: str | None = ...,
+    backend: BaseBackend | BackendAlias | None = ...,
     expire_after: timedelta = ...,
 ) -> niquests.AsyncSession:
     ...
@@ -490,6 +492,7 @@ def cached_session(
     aio: Literal[True],
     no_cache: Literal[False] = ...,
     app_name: str | None = ...,
+    backend: BaseBackend | BackendAlias | None = ...,
     expire_after: timedelta = ...,
 ) -> AsyncCachedSession:
     ...
@@ -501,6 +504,7 @@ def cached_session(
     aio: Literal[False] = ...,
     no_cache: Literal[False] = ...,
     app_name: str | None = ...,
+    backend: BaseBackend | BackendAlias | None = ...,
     expire_after: timedelta = ...,
 ) -> CachedSession:
     ...
@@ -512,6 +516,7 @@ def cached_session(
     aio: Literal[False] = ...,
     no_cache: bool = ...,
     app_name: str | None = ...,
+    backend: BaseBackend | BackendAlias | None = ...,
     expire_after: timedelta = ...,
 ) -> niquests.Session:
     ...
@@ -523,6 +528,7 @@ def cached_session(
     aio: Literal[True],
     no_cache: bool = ...,
     app_name: str | None = ...,
+    backend: BaseBackend | BackendAlias | None = ...,
     expire_after: timedelta = ...,
 ) -> niquests.AsyncSession:
     ...
@@ -533,12 +539,13 @@ def cached_session(
     aio: bool = False,
     no_cache: bool = False,
     app_name: str | None = None,
+    backend: BaseBackend | BackendAlias | None = None,
     expire_after: timedelta = _DEFAULT_HELPER_TTL,
 ) -> niquests.Session | niquests.AsyncSession | CachedSession | AsyncCachedSession:
     """
     Get a niquests session, optionally with SQLite-backed caching.
 
-    The cache database lives at ``<user cache path>/http.sqlite``.
+    The default cache database lives at ``<user cache path>/http.sqlite``.
 
     Parameters
     ----------
@@ -549,6 +556,10 @@ def cached_session(
     app_name : str | None
         First argument to :func:`platformdirs.user_cache_path` for the cache root. If ``None``,
         uses ``niquests-cache``.
+    backend : BaseBackend | BackendAlias | None
+        Storage backend. May be a :class:`BaseBackend` instance, an alias (``'sqlite'``,
+        ``'filesystem'``, ``'memory'``), or ``None`` (default) to use SQLite at the user-cache
+        path derived from ``app_name``.
     expire_after : timedelta
         Cache expiry duration (ignored when ``no_cache`` is ``True``).
 
@@ -562,11 +573,11 @@ def cached_session(
     """
     if no_cache:
         return niquests.AsyncSession() if aio else niquests.Session()
-    cache_dir = platformdirs.user_cache_path('niquests-cache' if app_name is None else app_name,
-                                             appauthor=False,
-                                             ensure_exists=True) / 'http'
-    if aio:
-        return AsyncCachedSession(cache_name=cache_dir,
-                                  expire_after=expire_after,
-                                  match_headers=True)
-    return CachedSession(cache_name=cache_dir, expire_after=expire_after, match_headers=True)
+    cache_name = platformdirs.user_cache_path('niquests-cache' if app_name is None else app_name,
+                                              appauthor=False,
+                                              ensure_exists=True) / 'http'
+    cls = AsyncCachedSession if aio else CachedSession
+    return cls(cache_name=cache_name,
+               backend=backend,
+               expire_after=expire_after,
+               match_headers=True)

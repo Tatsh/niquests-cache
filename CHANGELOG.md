@@ -29,6 +29,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `key_fn`, `read_only`, `stale_if_error`, and `autoclose`.
 - Debug logging of the selected backend at session construction.
 - New runtime dependencies: `aiosqlite>=0.20` and `anyio>=4.4`.
+- `cached_session()` helper accepts a `backend=` keyword argument (a
+  `~niquests_cache.backends.BaseBackend` instance or a built-in alias).
+- `BackendAlias` type alias in `niquests_cache.typing` for the literal set
+  `'sqlite' | 'memory' | 'filesystem'`.
+- `SQLiteBackend.close()` method to deterministically close the underlying SQLite connection
+  (also invoked automatically when the backend is garbage collected).
 
 ### Changed
 
