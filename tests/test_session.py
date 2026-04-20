@@ -702,3 +702,219 @@ async def test_async_cached_session_malformed_entry(mocker: MockerFixture) -> No
                         return_value=_mock_resp(b'good', 'https://example.com/m'))
     resp = await session.request('GET', 'https://example.com/m')
     assert resp.content == b'good'
+
+
+def test_cached_session_304_not_modified_refreshes_entry(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'original', 'https://example.com/cond', headers={'ETag': '"v1"'})
+    key = _key('GET', 'https://example.com/cond')
+    backend.set(key, entry)
+    session = CachedSession(backend=backend, cache_control=True, always_revalidate=True)
+    mocker.patch.object(niquests.Session,
+                        'request',
+                        return_value=_mock_resp(b'', 'https://example.com/cond', status=304))
+    resp = session.request('GET', 'https://example.com/cond')
+    assert resp.content == b'original'
+    refreshed = backend.get(key)
+    assert refreshed is not None
+    assert refreshed['ts'] >= entry['ts']
+
+
+def test_cached_session_cache_control_attaches_validators(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'cached',
+                   'https://example.com/val',
+                   headers={
+                       'ETag': '"e1"',
+                       'Last-Modified': 'Mon, 01 Jan 2024 00:00:00 GMT'
+                   })
+    key = _key('GET', 'https://example.com/val')
+    backend.set(key, entry)
+    session = CachedSession(backend=backend, cache_control=True, always_revalidate=True)
+    parent = mocker.patch.object(niquests.Session,
+                                 'request',
+                                 return_value=_mock_resp(b'new', 'https://example.com/val'))
+    session.request('GET', 'https://example.com/val')
+    call_kwargs = parent.call_args[1]
+    assert call_kwargs['headers']['If-None-Match'] == '"e1"'
+    assert call_kwargs['headers']['If-Modified-Since'] == 'Mon, 01 Jan 2024 00:00:00 GMT'
+
+
+def test_cached_session_cache_control_no_validators(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'cached', 'https://example.com/noval', headers={'Content-Type': 'text/html'})
+    key = _key('GET', 'https://example.com/noval')
+    backend.set(key, entry)
+    session = CachedSession(backend=backend, cache_control=True, always_revalidate=True)
+    parent = mocker.patch.object(niquests.Session,
+                                 'request',
+                                 return_value=_mock_resp(b'new', 'https://example.com/noval'))
+    session.request('GET', 'https://example.com/noval')
+    call_kwargs = parent.call_args[1]
+    assert 'If-None-Match' not in call_kwargs.get('headers', {})
+    assert 'If-Modified-Since' not in call_kwargs.get('headers', {})
+
+
+def test_cached_session_cache_control_last_modified_only(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'cached',
+                   'https://example.com/lm',
+                   headers={'Last-Modified': 'Mon, 01 Jan 2024 00:00:00 GMT'})
+    key = _key('GET', 'https://example.com/lm')
+    backend.set(key, entry)
+    session = CachedSession(backend=backend, cache_control=True, always_revalidate=True)
+    parent = mocker.patch.object(niquests.Session,
+                                 'request',
+                                 return_value=_mock_resp(b'new', 'https://example.com/lm'))
+    session.request('GET', 'https://example.com/lm')
+    call_kwargs = parent.call_args[1]
+    assert 'If-None-Match' not in call_kwargs.get('headers', {})
+    assert call_kwargs['headers']['If-Modified-Since'] == 'Mon, 01 Jan 2024 00:00:00 GMT'
+
+
+async def test_async_cached_session_304_not_modified(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'original', 'https://example.com/acond', headers={'ETag': '"v2"'})
+    key = _key('GET', 'https://example.com/acond')
+    backend.set(key, entry)
+    session = AsyncCachedSession(backend=backend, cache_control=True, always_revalidate=True)
+    mocker.patch.object(niquests.AsyncSession,
+                        'request',
+                        return_value=_mock_resp(b'', 'https://example.com/acond', status=304))
+    resp = await session.request('GET', 'https://example.com/acond')
+    assert resp.content == b'original'
+    refreshed = backend.get(key)
+    assert refreshed is not None
+    assert refreshed['ts'] >= entry['ts']
+
+
+async def test_async_cached_session_cache_control_attaches_validators(
+        mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'cached',
+                   'https://example.com/aval',
+                   headers={
+                       'ETag': '"ae1"',
+                       'Last-Modified': 'Mon, 01 Jan 2024 00:00:00 GMT'
+                   })
+    key = _key('GET', 'https://example.com/aval')
+    backend.set(key, entry)
+    session = AsyncCachedSession(backend=backend, cache_control=True, always_revalidate=True)
+    parent = mocker.patch.object(niquests.AsyncSession,
+                                 'request',
+                                 return_value=_mock_resp(b'new', 'https://example.com/aval'))
+    await session.request('GET', 'https://example.com/aval')
+    call_kwargs = parent.call_args[1]
+    assert call_kwargs['headers']['If-None-Match'] == '"ae1"'
+    assert call_kwargs['headers']['If-Modified-Since'] == 'Mon, 01 Jan 2024 00:00:00 GMT'
+
+
+def test_cached_session_always_revalidate_without_cache_control(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'cached', 'https://example.com/reval', headers={'ETag': '"v1"'})
+    key = _key('GET', 'https://example.com/reval')
+    backend.set(key, entry)
+    session = CachedSession(backend=backend, always_revalidate=True, cache_control=False)
+    parent = mocker.patch.object(niquests.Session,
+                                 'request',
+                                 return_value=_mock_resp(b'new', 'https://example.com/reval'))
+    session.request('GET', 'https://example.com/reval')
+    call_kwargs = parent.call_args[1]
+    assert 'If-None-Match' not in call_kwargs.get('headers', {})
+    assert 'If-Modified-Since' not in call_kwargs.get('headers', {})
+
+
+def test_cached_session_cache_control_etag_only(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'cached', 'https://example.com/etag', headers={'ETag': '"e-only"'})
+    key = _key('GET', 'https://example.com/etag')
+    backend.set(key, entry)
+    session = CachedSession(backend=backend, cache_control=True, always_revalidate=True)
+    parent = mocker.patch.object(niquests.Session,
+                                 'request',
+                                 return_value=_mock_resp(b'new', 'https://example.com/etag'))
+    session.request('GET', 'https://example.com/etag')
+    call_kwargs = parent.call_args[1]
+    assert call_kwargs['headers']['If-None-Match'] == '"e-only"'
+    assert 'If-Modified-Since' not in call_kwargs['headers']
+
+
+def test_cached_session_expired_entry_attaches_validators(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'stale',
+                   'https://example.com/exp-val',
+                   ts_offset=-100,
+                   headers={'ETag': '"old"'})
+    key = _key('GET', 'https://example.com/exp-val')
+    backend.set(key, entry)
+    session = CachedSession(backend=backend, expire_after=1, cache_control=True)
+    parent = mocker.patch.object(niquests.Session,
+                                 'request',
+                                 return_value=_mock_resp(b'fresh', 'https://example.com/exp-val'))
+    session.request('GET', 'https://example.com/exp-val')
+    call_kwargs = parent.call_args[1]
+    assert call_kwargs['headers']['If-None-Match'] == '"old"'
+
+
+def test_cached_session_304_with_force_refresh_returns_304(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'original', 'https://example.com/fr304', headers={'ETag': '"v1"'})
+    key = _key('GET', 'https://example.com/fr304')
+    backend.set(key, entry)
+    session = CachedSession(backend=backend, cache_control=True)
+    mocker.patch.object(niquests.Session,
+                        'request',
+                        return_value=_mock_resp(b'', 'https://example.com/fr304', status=304))
+    resp = session.request('GET', 'https://example.com/fr304', force_refresh=True)
+    assert resp.status_code == 304
+
+
+def test_cached_session_case_insensitive_validator_headers(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'cached',
+                   'https://example.com/ci',
+                   headers={
+                       'etag': '"lower"',
+                       'last-modified': 'Mon, 01 Jan 2024 00:00:00 GMT'
+                   })
+    key = _key('GET', 'https://example.com/ci')
+    backend.set(key, entry)
+    session = CachedSession(backend=backend, cache_control=True, always_revalidate=True)
+    parent = mocker.patch.object(niquests.Session,
+                                 'request',
+                                 return_value=_mock_resp(b'new', 'https://example.com/ci'))
+    session.request('GET', 'https://example.com/ci')
+    call_kwargs = parent.call_args[1]
+    assert call_kwargs['headers']['If-None-Match'] == '"lower"'
+    assert call_kwargs['headers']['If-Modified-Since'] == 'Mon, 01 Jan 2024 00:00:00 GMT'
+
+
+async def test_async_cached_session_304_with_force_refresh(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'original', 'https://example.com/afr304', headers={'ETag': '"v1"'})
+    key = _key('GET', 'https://example.com/afr304')
+    backend.set(key, entry)
+    session = AsyncCachedSession(backend=backend, cache_control=True)
+    mocker.patch.object(niquests.AsyncSession,
+                        'request',
+                        return_value=_mock_resp(b'', 'https://example.com/afr304', status=304))
+    resp = await session.request('GET', 'https://example.com/afr304', force_refresh=True)
+    assert resp.status_code == 304
+
+
+async def test_async_cached_session_expired_entry_attaches_validators(
+        mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'stale',
+                   'https://example.com/aexp-val',
+                   ts_offset=-100,
+                   headers={'ETag': '"old"'})
+    key = _key('GET', 'https://example.com/aexp-val')
+    backend.set(key, entry)
+    session = AsyncCachedSession(backend=backend, expire_after=1, cache_control=True)
+    parent = mocker.patch.object(niquests.AsyncSession,
+                                 'request',
+                                 return_value=_mock_resp(b'fresh', 'https://example.com/aexp-val'))
+    await session.request('GET', 'https://example.com/aexp-val')
+    call_kwargs = parent.call_args[1]
+    assert call_kwargs['headers']['If-None-Match'] == '"old"'

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from hashlib import sha256
+from http import HTTPStatus
 from time import time
 from typing import TYPE_CHECKING, Any, Literal, cast, overload
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -28,8 +29,47 @@ __all__ = ('AsyncCachedSession', 'CacheMixin', 'CachedSession', 'cached_session'
 log = logging.getLogger(__name__)
 
 _INF = float('inf')
-_DEFAULT_IGNORED: tuple[str, ...] = ('Authorization', 'X-API-KEY', 'access_token', 'api_key')
+_DEFAULT_IGNORED: tuple[str, ...] = ('Authorization', 'If-Modified-Since', 'If-None-Match',
+                                     'X-API-KEY', 'access_token', 'api_key')
 _DEFAULT_HELPER_TTL = timedelta(minutes=10)
+
+
+def _lookup_header(headers: Mapping[str, Any], name: str) -> str | None:
+    target = name.lower()
+    for key, value in headers.items():
+        if key.lower() == target:
+            return str(value) if value is not None else None
+    return None
+
+
+def _attach_validators(entry: CacheEntry, kwargs: dict[str, Any]) -> bool:
+    """
+    Copy ``ETag`` / ``Last-Modified`` validators from *entry* into *kwargs*' headers.
+
+    Parameters
+    ----------
+    entry : CacheEntry
+        The stored cache entry.
+    kwargs : dict[str, Any]
+        The outbound request kwargs, mutated in place.
+
+    Returns
+    -------
+    bool
+        ``True`` if any conditional header was attached.
+    """
+    stored_headers = entry.get('headers') or {}
+    etag = _lookup_header(stored_headers, 'etag')
+    last_modified = _lookup_header(stored_headers, 'last-modified')
+    if not etag and not last_modified:
+        return False
+    headers = dict(kwargs.get('headers') or {})
+    if etag:
+        headers['If-None-Match'] = etag
+    if last_modified:
+        headers['If-Modified-Since'] = last_modified
+    kwargs['headers'] = headers
+    return True
 
 
 def _to_seconds(value: ExpireAfter) -> float:
@@ -56,7 +96,7 @@ def _to_seconds(value: ExpireAfter) -> float:
     if isinstance(value, bool):
         msg = 'expire_after may not be a bool.'
         raise TypeError(msg)
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return _INF if value == -1 else float(value)
     if isinstance(value, timedelta):
         return value.total_seconds()
@@ -216,25 +256,8 @@ def _build_key(method: str, url: str, kwargs: Mapping[str, Any], session_headers
     return _default_key(method, eff_url, eff_headers)
 
 
-def _try_cache_hit(key: str, ttl: float, backend: BaseBackend, method: str,
+def _try_cache_hit(entry: CacheEntry, ttl: float, method: str,
                    url: str) -> niquests.Response | None:
-    entry = backend.get(key)
-    if entry is None:
-        return None
-    try:
-        if ttl == _INF or time() - entry['ts'] < ttl:
-            log.debug('Cache hit: %s %s', method, url)
-            return _response_from_entry(entry)
-    except KeyError:
-        log.debug('Malformed cache entry: %s %s', method, url, exc_info=True)
-    return None
-
-
-async def _try_cache_hit_async(key: str, ttl: float, backend: BaseBackend, method: str,
-                               url: str) -> niquests.Response | None:
-    entry = await backend.aget(key)
-    if entry is None:
-        return None
     try:
         if ttl == _INF or time() - entry['ts'] < ttl:
             log.debug('Cache hit: %s %s', method, url)
@@ -271,6 +294,51 @@ class CacheMixin:
                  stale_if_error: bool | int = False,
                  autoclose: bool = True,
                  **kwargs: Any) -> None:
+        """
+        Initialise the cache mixin with backend and settings.
+
+        Parameters
+        ----------
+        cache_name : StrPath
+            Base name or path for the cache storage.
+        backend : BaseBackend | BackendAlias | None
+            Storage backend instance, an alias string (``'sqlite'``, ``'filesystem'``,
+            ``'memory'``), or ``None`` to default to SQLite.
+        serializer : Serializer | str | None
+            Serialiser to use for reading and writing cache entries.
+        expire_after : ExpireAfter
+            Default time-to-live for cache entries. ``-1`` means never expire.
+        urls_expire_after : Mapping[str | re.Pattern[str], ExpireAfter] | None
+            Per-URL pattern overrides for cache expiry.
+        cache_control : bool
+            If ``True``, honour ``ETag`` and ``Last-Modified`` revalidation headers.
+        content_root_key : str | None
+            Reserved for future use.
+        allowable_codes : Iterable[int]
+            HTTP status codes eligible for caching.
+        allowable_methods : Iterable[str]
+            HTTP methods eligible for caching.
+        always_revalidate : bool
+            If ``True``, always send a conditional request even on a cache hit.
+        ignored_parameters : Iterable[str]
+            Header and query-string parameter names excluded from the cache key.
+        match_headers : bool | Iterable[str]
+            Whether to include request headers in the cache key. ``True`` includes
+            all headers; a sequence includes only the listed names.
+        filter_fn : Callable[..., bool] | None
+            Optional predicate; responses for which it returns ``False`` are not cached.
+        key_fn : Callable[..., str] | None
+            Optional custom cache-key generator replacing the default.
+        read_only : bool
+            If ``True``, the cache is never written to.
+        stale_if_error : bool | int
+            Serve stale entries on upstream errors; an ``int`` sets the grace period
+            in seconds.
+        autoclose : bool
+            If ``True``, the backend is closed when the session is closed.
+        **kwargs : Any
+            Additional keyword arguments forwarded to the parent session class.
+        """
         super().__init__(**kwargs)
         self._cache: BaseBackend = _resolve_backend(backend, cache_name, serializer)
         _log_backend(self._cache)
@@ -292,6 +360,7 @@ class CacheMixin:
             stale_if_error=stale_if_error,
             urls_expire_after=urls_expire_after,
         )
+        """Mutable cache settings for this session."""
 
     @property
     def cache(self) -> BaseBackend:
@@ -373,12 +442,20 @@ class CachedSession(CacheMixin, niquests.Session):
             return super().request(method, url, *args, **kwargs)
         key = _build_key(method_upper, url, kwargs, self.headers, s)
         ttl = _resolve_ttl(url, expire_after, s)
-        if not bypass_read and ttl > 0 and (hit := _try_cache_hit(key, ttl, self._cache,
-                                                                  method_upper, url)) is not None:
+        entry = None if bypass_read else self._cache.get(key)
+        if entry is not None and not s.always_revalidate and ttl > 0 and (hit := _try_cache_hit(
+                entry, ttl, method_upper, url)) is not None:
             return hit
         if only_if_cached:
             return _make_504(url)
+        if entry is not None and s.cache_control:
+            _attach_validators(entry, kwargs)
         resp = super().request(method, url, *args, **kwargs)
+        if resp.status_code == HTTPStatus.NOT_MODIFIED.value and entry is not None:
+            log.debug('304 Not Modified: refreshing cache entry for %s %s.', method_upper, url)
+            entry['ts'] = time()
+            self._cache.set(key, entry)
+            return _response_from_entry(entry)
         if _should_store(method_upper, resp, s):
             log.debug('Caching response: %s %s', method, url)
             self._cache.set(key, _entry_from_response(resp))
@@ -454,12 +531,20 @@ class AsyncCachedSession(CacheMixin, niquests.AsyncSession):
             return cast('niquests.Response', await super().request(method, url, *args, **kwargs))
         key = _build_key(method_upper, url, kwargs, self.headers, s)
         ttl = _resolve_ttl(url, expire_after, s)
-        if not bypass_read and ttl > 0 and (hit := await _try_cache_hit_async(
-                key, ttl, self._cache, method_upper, url)) is not None:
+        entry = None if bypass_read else await self._cache.aget(key)
+        if entry is not None and not s.always_revalidate and ttl > 0 and (hit := _try_cache_hit(
+                entry, ttl, method_upper, url)) is not None:
             return hit
         if only_if_cached:
             return _make_504(url)
+        if entry is not None and s.cache_control:
+            _attach_validators(entry, kwargs)
         resp = cast('niquests.Response', await super().request(method, url, *args, **kwargs))
+        if resp.status_code == HTTPStatus.NOT_MODIFIED.value and entry is not None:
+            log.debug('304 Not Modified: refreshing cache entry for %s %s.', method_upper, url)
+            entry['ts'] = time()
+            await self._cache.aset(key, entry)
+            return _response_from_entry(entry)
         if _should_store(method_upper, resp, s):
             log.debug('Caching response: %s %s', method, url)
             await self._cache.aset(key, _entry_from_response(resp))

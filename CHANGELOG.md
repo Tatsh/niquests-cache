@@ -9,6 +9,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+### Added
+
+- Conditional revalidation support in `CachedSession` and `AsyncCachedSession`: when
+  `cache_control=True`, outbound requests include `If-None-Match` and `If-Modified-Since` headers
+  derived from the cached entry's `ETag` and `Last-Modified` values.
+- 304 Not Modified handling: a 304 response now refreshes the cached entry's timestamp instead of
+  replacing it, and the original cached response is returned to the caller.
+- `always_revalidate` setting: when enabled, every request with a cached entry sends a conditional
+  request to the origin server, bypassing the TTL-based cache-hit path.
+
+### Changed
+
+- `If-Modified-Since` and `If-None-Match` are now included in the default ignored parameters list
+  so conditional headers do not affect cache keys.
+
 ## [0.2.0] - 2026-04-18
 
 ### Removed
