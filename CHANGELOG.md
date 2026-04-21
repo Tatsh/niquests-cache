@@ -9,6 +9,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+### Fixed
+
+- Streamed responses (`stream=True`) whose body has not been consumed are no longer cached. In async
+  mode, `resp.content` would still be a coroutine, causing the cache entry to contain an unresolved
+  coroutine object instead of the actual response body.
+
 ## [0.2.1] - 2026-04-20
 
 ### Added

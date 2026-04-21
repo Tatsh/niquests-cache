@@ -268,6 +268,11 @@ def _try_cache_hit(entry: CacheEntry, ttl: float, method: str,
 
 
 def _should_store(method: str, resp: niquests.Response, settings: CacheSettings) -> bool:
+    # A streamed response (``stream=True``) whose body the caller has not yet read cannot be
+    # cached: in async mode ``resp.content`` is still a coroutine at this point, so materialising
+    # the cache entry would bind an unresolved coroutine into the backend.
+    if not getattr(resp, '_content_consumed', True):
+        return False
     return (resp.status_code in settings.allowable_codes and method in settings.allowable_methods
             and (settings.filter_fn is None or settings.filter_fn(resp)) and not settings.read_only)
 

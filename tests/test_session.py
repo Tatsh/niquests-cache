@@ -45,6 +45,7 @@ def _mock_resp(content: bytes = b'body',
     resp = niquests.Response()
     resp.status_code = status
     resp._content = content  # noqa: SLF001
+    resp._content_consumed = True  # noqa: SLF001
     resp.url = url
     resp.encoding = 'utf-8'
     return resp
@@ -918,3 +919,24 @@ async def test_async_cached_session_expired_entry_attaches_validators(
     await session.request('GET', 'https://example.com/aexp-val')
     call_kwargs = parent.call_args[1]
     assert call_kwargs['headers']['If-None-Match'] == '"old"'
+
+
+def test_cached_session_unconsumed_stream_not_cached(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    session = CachedSession(backend=backend)
+    resp = _mock_resp(b'', 'https://example.com/stream')
+    resp._content_consumed = False  # noqa: SLF001
+    mocker.patch.object(niquests.Session, 'request', return_value=resp)
+    session.request('GET', 'https://example.com/stream')
+    assert backend.get(_key('GET', 'https://example.com/stream')) is None
+
+
+@pytest.mark.asyncio
+async def test_async_cached_session_unconsumed_stream_not_cached(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    session = AsyncCachedSession(backend=backend)
+    resp = _mock_resp(b'', 'https://example.com/astream')
+    resp._content_consumed = False  # noqa: SLF001
+    mocker.patch.object(niquests.AsyncSession, 'request', return_value=resp)
+    await session.request('GET', 'https://example.com/astream')
+    assert backend.get(_key('GET', 'https://example.com/astream')) is None
