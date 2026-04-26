@@ -61,7 +61,7 @@ def _entry(content: bytes = b'body',
         'headers': dict(headers or {}),
         'status_code': 200,
         'ts': time() + ts_offset,
-        'url': url,
+        'url': url
     }
 
 
@@ -113,11 +113,43 @@ def test_cached_session_custom_app_name(tmp_path: Path, mocker: MockerFixture) -
 
 
 def test_cached_session_no_cache_returns_plain_session() -> None:
-    assert type(cached_session(no_cache=True)) is niquests.Session
+    session = cached_session(no_cache=True)
+    assert isinstance(session, niquests.Session)
+    assert not isinstance(session, CachedSession)
 
 
 def test_cached_session_no_cache_aio_returns_plain_async_session() -> None:
-    assert type(cached_session(aio=True, no_cache=True)) is niquests.AsyncSession
+    session = cached_session(aio=True, no_cache=True)
+    assert isinstance(session, niquests.AsyncSession)
+    assert not isinstance(session, AsyncCachedSession)
+
+
+def test_cached_session_no_cache_drops_cache_kwargs(mocker: MockerFixture) -> None:
+    session = cached_session(no_cache=True)
+    base_request = mocker.patch.object(niquests.Session, 'request', return_value=_mock_resp())
+    session.get('https://example.com/x',
+                expire_after=0,
+                only_if_cached=True,
+                refresh=True,
+                force_refresh=True)
+    forwarded = base_request.call_args.kwargs
+    for k in ('expire_after', 'only_if_cached', 'refresh', 'force_refresh'):
+        assert k not in forwarded
+
+
+@pytest.mark.asyncio
+async def test_cached_session_no_cache_aio_drops_cache_kwargs(mocker: MockerFixture) -> None:
+    session = cached_session(aio=True, no_cache=True)
+    base_request = mocker.patch.object(niquests.AsyncSession, 'request',
+                                       mocker.AsyncMock(return_value=_mock_resp()))
+    await session.get('https://example.com/x',
+                      expire_after=0,
+                      only_if_cached=True,
+                      refresh=True,
+                      force_refresh=True)
+    forwarded = base_request.call_args.kwargs
+    for k in ('expire_after', 'only_if_cached', 'refresh', 'force_refresh'):
+        assert k not in forwarded
 
 
 def test_cached_session_default_backend_is_sqlite(tmp_path: Path) -> None:

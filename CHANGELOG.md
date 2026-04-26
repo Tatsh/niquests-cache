@@ -9,6 +9,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+### Fixed
+
+- `cached_session(no_cache=True)` now returns a session that silently ignores the cache-only
+  request kwargs (`expire_after`, `only_if_cached`, `refresh`, `force_refresh`). Previously,
+  passing any of them — for example `session.get(url, expire_after=0)` — raised
+  `TypeError: AsyncSession.request() got an unexpected keyword argument 'expire_after'` because
+  the underlying plain `niquests.Session` / `niquests.AsyncSession` does not accept those kwargs.
+
 ## [0.2.2] - 2026-04-21
 
 ### Fixed

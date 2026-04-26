@@ -15,6 +15,7 @@ import re
 from niquests_cache.backends import BaseBackend, FileCache, MemoryBackend, SQLiteBackend
 from niquests_cache.serializers import resolve_serializer
 from niquests_cache.settings import CacheSettings
+from typing_extensions import override
 import niquests
 import platformdirs
 
@@ -32,6 +33,8 @@ _INF = float('inf')
 _DEFAULT_IGNORED: tuple[str, ...] = ('Authorization', 'If-Modified-Since', 'If-None-Match',
                                      'X-API-KEY', 'access_token', 'api_key')
 _DEFAULT_HELPER_TTL = timedelta(minutes=10)
+_CACHE_ONLY_REQUEST_KWARGS: tuple[str, ...] = ('expire_after', 'force_refresh', 'only_if_cached',
+                                               'refresh')
 
 
 def _lookup_header(headers: Mapping[str, Any], name: str) -> str | None:
@@ -204,7 +207,7 @@ def _entry_from_response(resp: niquests.Response) -> CacheEntry:
         },
         'status_code': resp.status_code or 0,
         'ts': time(),
-        'url': str(resp.url),
+        'url': str(resp.url)
     }
 
 
@@ -363,8 +366,7 @@ class CacheMixin:
             read_only=read_only,
             serializer=resolve_serializer(serializer),
             stale_if_error=stale_if_error,
-            urls_expire_after=urls_expire_after,
-        )
+            urls_expire_after=urls_expire_after)
         """Mutable cache settings for this session."""
 
     @property
@@ -398,17 +400,16 @@ class CachedSession(CacheMixin, niquests.Session):
             self.settings.disabled = prev
 
     def request(  # type: ignore[override]
-        self,
-        method: str,
-        url: str,
-        *args: Any,
-        headers: Mapping[str, str] | None = None,
-        expire_after: ExpireAfter = None,
-        only_if_cached: bool = False,
-        refresh: bool = False,
-        force_refresh: bool = False,
-        **kwargs: Any,
-    ) -> niquests.Response:
+            self,
+            method: str,
+            url: str,
+            *args: Any,
+            headers: Mapping[str, str] | None = None,
+            expire_after: ExpireAfter = None,
+            only_if_cached: bool = False,
+            refresh: bool = False,
+            force_refresh: bool = False,
+            **kwargs: Any) -> niquests.Response:
         """
         Send a request, returning a cached response when one is available.
 
@@ -487,17 +488,16 @@ class AsyncCachedSession(CacheMixin, niquests.AsyncSession):
             self.settings.disabled = prev
 
     async def request(  # type: ignore[override] # ty: ignore[invalid-method-override]
-        self,
-        method: str,
-        url: str,
-        *args: Any,
-        headers: Mapping[str, str] | None = None,
-        expire_after: ExpireAfter = None,
-        only_if_cached: bool = False,
-        refresh: bool = False,
-        force_refresh: bool = False,
-        **kwargs: Any,
-    ) -> niquests.Response:
+            self,
+            method: str,
+            url: str,
+            *args: Any,
+            headers: Mapping[str, str] | None = None,
+            expire_after: ExpireAfter = None,
+            only_if_cached: bool = False,
+            refresh: bool = False,
+            force_refresh: bool = False,
+            **kwargs: Any) -> niquests.Response:
         """
         Send an async request, returning a cached response when available.
 
@@ -556,75 +556,135 @@ class AsyncCachedSession(CacheMixin, niquests.AsyncSession):
         return resp
 
 
+class _NoCacheSession(niquests.Session):
+    """
+    Plain :class:`niquests.Session` that silently ignores cache-only request kwargs.
+
+    Returned by :func:`cached_session` when ``no_cache`` is ``True`` so callers can pass
+    ``expire_after``, ``only_if_cached``, ``refresh``, or ``force_refresh`` without raising
+    :py:class:`TypeError`.
+    """
+    @override
+    def request(self, method: str, url: str, *args: Any, **kwargs: Any) -> niquests.Response:
+        """
+        Send a request, dropping cache-only kwargs before delegating to the parent.
+
+        Parameters
+        ----------
+        method : str
+            The HTTP method.
+        url : str
+            The URL.
+        *args : Any
+            Positional arguments forwarded to :py:meth:`niquests.Session.request`.
+        **kwargs : Any
+            Keyword arguments forwarded to :py:meth:`niquests.Session.request`. Cache-only keys
+            (``expire_after``, ``only_if_cached``, ``refresh``, ``force_refresh``) are removed.
+
+        Returns
+        -------
+        niquests.Response
+            The HTTP response.
+        """
+        for k in _CACHE_ONLY_REQUEST_KWARGS:
+            kwargs.pop(k, None)
+        return super().request(method, url, *args, **kwargs)
+
+
+class _NoCacheAsyncSession(niquests.AsyncSession):
+    """
+    Plain :class:`niquests.AsyncSession` that silently ignores cache-only request kwargs.
+
+    Returned by :func:`cached_session` when ``no_cache`` is ``True`` and ``aio`` is ``True`` so
+    callers can pass ``expire_after``, ``only_if_cached``, ``refresh``, or ``force_refresh``
+    without raising :py:class:`TypeError`.
+    """
+    @override
+    async def request(  # type: ignore[override]
+            self, method: str, url: str, *args: Any, **kwargs: Any) -> niquests.Response:
+        """
+        Send an async request, dropping cache-only kwargs before delegating to the parent.
+
+        Parameters
+        ----------
+        method : str
+            The HTTP method.
+        url : str
+            The URL.
+        *args : Any
+            Positional arguments forwarded to :py:meth:`niquests.AsyncSession.request`.
+        **kwargs : Any
+            Keyword arguments forwarded to :py:meth:`niquests.AsyncSession.request`. Cache-only
+            keys (``expire_after``, ``only_if_cached``, ``refresh``, ``force_refresh``) are
+            removed.
+
+        Returns
+        -------
+        niquests.Response
+            The HTTP response.
+        """
+        for k in _CACHE_ONLY_REQUEST_KWARGS:
+            kwargs.pop(k, None)
+        return cast('niquests.Response', await super().request(method, url, *args, **kwargs))
+
+
 @overload
-def cached_session(
-    *,
-    aio: Literal[False] = ...,
-    no_cache: Literal[True],
-    app_name: str | None = ...,
-    backend: BaseBackend | BackendAlias | None = ...,
-    expire_after: timedelta = ...,
-) -> niquests.Session:
+def cached_session(*,
+                   aio: Literal[False] = ...,
+                   no_cache: Literal[True],
+                   app_name: str | None = ...,
+                   backend: BaseBackend | BackendAlias | None = ...,
+                   expire_after: timedelta = ...) -> niquests.Session:
     ...
 
 
 @overload
-def cached_session(
-    *,
-    aio: Literal[True],
-    no_cache: Literal[True],
-    app_name: str | None = ...,
-    backend: BaseBackend | BackendAlias | None = ...,
-    expire_after: timedelta = ...,
-) -> niquests.AsyncSession:
+def cached_session(*,
+                   aio: Literal[True],
+                   no_cache: Literal[True],
+                   app_name: str | None = ...,
+                   backend: BaseBackend | BackendAlias | None = ...,
+                   expire_after: timedelta = ...) -> niquests.AsyncSession:
     ...
 
 
 @overload
-def cached_session(
-    *,
-    aio: Literal[True],
-    no_cache: Literal[False] = ...,
-    app_name: str | None = ...,
-    backend: BaseBackend | BackendAlias | None = ...,
-    expire_after: timedelta = ...,
-) -> AsyncCachedSession:
+def cached_session(*,
+                   aio: Literal[True],
+                   no_cache: Literal[False] = ...,
+                   app_name: str | None = ...,
+                   backend: BaseBackend | BackendAlias | None = ...,
+                   expire_after: timedelta = ...) -> AsyncCachedSession:
     ...
 
 
 @overload
-def cached_session(
-    *,
-    aio: Literal[False] = ...,
-    no_cache: Literal[False] = ...,
-    app_name: str | None = ...,
-    backend: BaseBackend | BackendAlias | None = ...,
-    expire_after: timedelta = ...,
-) -> CachedSession:
+def cached_session(*,
+                   aio: Literal[False] = ...,
+                   no_cache: Literal[False] = ...,
+                   app_name: str | None = ...,
+                   backend: BaseBackend | BackendAlias | None = ...,
+                   expire_after: timedelta = ...) -> CachedSession:
     ...
 
 
 @overload
-def cached_session(
-    *,
-    aio: Literal[False] = ...,
-    no_cache: bool = ...,
-    app_name: str | None = ...,
-    backend: BaseBackend | BackendAlias | None = ...,
-    expire_after: timedelta = ...,
-) -> niquests.Session:
+def cached_session(*,
+                   aio: Literal[False] = ...,
+                   no_cache: bool = ...,
+                   app_name: str | None = ...,
+                   backend: BaseBackend | BackendAlias | None = ...,
+                   expire_after: timedelta = ...) -> niquests.Session:
     ...
 
 
 @overload
-def cached_session(
-    *,
-    aio: Literal[True],
-    no_cache: bool = ...,
-    app_name: str | None = ...,
-    backend: BaseBackend | BackendAlias | None = ...,
-    expire_after: timedelta = ...,
-) -> niquests.AsyncSession:
+def cached_session(*,
+                   aio: Literal[True],
+                   no_cache: bool = ...,
+                   app_name: str | None = ...,
+                   backend: BaseBackend | BackendAlias | None = ...,
+                   expire_after: timedelta = ...) -> niquests.AsyncSession:
     ...
 
 
@@ -634,7 +694,7 @@ def cached_session(
     no_cache: bool = False,
     app_name: str | None = None,
     backend: BaseBackend | BackendAlias | None = None,
-    expire_after: timedelta = _DEFAULT_HELPER_TTL,
+    expire_after: timedelta = _DEFAULT_HELPER_TTL
 ) -> niquests.Session | niquests.AsyncSession | CachedSession | AsyncCachedSession:
     """
     Get a niquests session, optionally with SQLite-backed caching.
@@ -666,7 +726,7 @@ def cached_session(
         context manager when ``aio`` is ``True``.
     """
     if no_cache:
-        return niquests.AsyncSession() if aio else niquests.Session()
+        return _NoCacheAsyncSession() if aio else _NoCacheSession()
     cache_name = platformdirs.user_cache_path('niquests-cache' if app_name is None else app_name,
                                               appauthor=False,
                                               ensure_exists=True) / 'http'
