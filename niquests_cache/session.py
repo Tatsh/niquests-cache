@@ -600,7 +600,7 @@ class _NoCacheAsyncSession(niquests.AsyncSession):
     without raising :py:class:`TypeError`.
     """
     @override
-    async def request(  # type: ignore[override]
+    async def request(  # type: ignore[override] # ty: ignore[invalid-method-override]
             self, method: str, url: str, *args: Any, **kwargs: Any) -> niquests.Response:
         """
         Send an async request, dropping cache-only kwargs before delegating to the parent.
