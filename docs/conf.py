@@ -79,5 +79,5 @@ intersphinx_mapping = {
     'anyio': ('https://anyio.readthedocs.io/en/stable', None),
     'niquests': ('https://niquests.readthedocs.io/en/latest', None),
     'platformdirs': ('https://platformdirs.readthedocs.io/en/latest', None),
-    'python': ('https://docs.python.org/3', None),
+    'python': ('https://docs.python.org/3', None)
 }

@@ -50,7 +50,5 @@ def mock_user_cache_path(mocker: MockerFixture, tmp_path: Path) -> MagicMock:
     MagicMock
         The patched ``user_cache_path`` callable.
     """
-    return mocker.patch(
-        'niquests_cache.session.platformdirs.user_cache_path',
-        return_value=tmp_path / 'user-cache-root',
-    )
+    return mocker.patch('niquests_cache.session.platformdirs.user_cache_path',
+                        return_value=tmp_path / 'user-cache-root')

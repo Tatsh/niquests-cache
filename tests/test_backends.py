@@ -25,7 +25,7 @@ def _entry(content: bytes = b'hi',
         'headers': dict({'X-Test': 'y'} if headers is None else headers),
         'status_code': 200,
         'ts': time() + ts_offset,
-        'url': url,
+        'url': url
     }
 
 

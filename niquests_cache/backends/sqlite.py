@@ -45,7 +45,7 @@ def _row_to_entry(row: tuple[Any, ...]) -> CacheEntry:
         'headers': cast('dict[str, str]', json.loads(headers_json)),
         'status_code': status_code,
         'ts': ts,
-        'url': url,
+        'url': url
     }
 
 
