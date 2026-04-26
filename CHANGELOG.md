@@ -9,6 +9,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+## [0.2.3] - 2026-04-25
+
 ### Fixed
 
 - `cached_session(no_cache=True)` now returns a session that silently ignores the cache-only

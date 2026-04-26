@@ -3,7 +3,7 @@ local utils = import 'utils.libsonnet';
 {
   uses_user_defaults: true,
   project_name: 'niquests-cache',
-  version: '0.2.2',
+  version: '0.2.3',
   description: 'Cached niquests sessions with pluggable storage backends.',
   keywords: ['cache', 'filesystem', 'http', 'niquests'],
   python_deps+: {
