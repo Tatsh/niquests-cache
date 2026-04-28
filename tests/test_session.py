@@ -935,6 +935,21 @@ async def test_async_cached_session_304_with_force_refresh(mocker: MockerFixture
     assert resp.status_code == 304
 
 
+async def test_async_cached_session_cache_control_without_validators(mocker: MockerFixture) -> None:
+    backend = MemoryBackend()
+    entry = _entry(b'cached', 'https://example.com/anoval')
+    key = _key('GET', 'https://example.com/anoval')
+    backend.set(key, entry)
+    session = AsyncCachedSession(backend=backend, cache_control=True, always_revalidate=True)
+    parent = mocker.patch.object(niquests.AsyncSession,
+                                 'request',
+                                 return_value=_mock_resp(b'new', 'https://example.com/anoval'))
+    await session.request('GET', 'https://example.com/anoval')
+    call_kwargs = parent.call_args[1]
+    assert 'If-None-Match' not in (call_kwargs.get('headers') or {})
+    assert 'If-Modified-Since' not in (call_kwargs.get('headers') or {})
+
+
 async def test_async_cached_session_expired_entry_attaches_validators(
         mocker: MockerFixture) -> None:
     backend = MemoryBackend()

@@ -45,34 +45,36 @@ def _lookup_header(headers: Mapping[str, Any], name: str) -> str | None:
     return None
 
 
-def _attach_validators(entry: CacheEntry, kwargs: dict[str, Any]) -> bool:
+def _validator_headers(entry: CacheEntry,
+                       current_headers: Mapping[str, Any] | None) -> dict[str, Any] | None:
     """
-    Copy ``ETag`` / ``Last-Modified`` validators from *entry* into *kwargs*' headers.
+    Build a headers dict augmented with conditional validators from *entry*.
 
     Parameters
     ----------
     entry : CacheEntry
         The stored cache entry.
-    kwargs : dict[str, Any]
-        The outbound request kwargs, mutated in place.
+    current_headers : Mapping[str, Any] | None
+        The outbound request headers, if any.
 
     Returns
     -------
-    bool
-        ``True`` if any conditional header was attached.
+    dict[str, Any] | None
+        A new headers dict copied from *current_headers* with ``If-None-Match`` /
+        ``If-Modified-Since`` derived from the entry, or ``None`` if the entry carries no
+        usable validators.
     """
     stored_headers = entry.get('headers') or {}
     etag = _lookup_header(stored_headers, 'etag')
     last_modified = _lookup_header(stored_headers, 'last-modified')
     if not etag and not last_modified:
-        return False
-    headers = dict(kwargs.get('headers') or {})
+        return None
+    headers = dict(current_headers or {})
     if etag:
         headers['If-None-Match'] = etag
     if last_modified:
         headers['If-Modified-Since'] = last_modified
-    kwargs['headers'] = headers
-    return True
+    return headers
 
 
 def _to_seconds(value: ExpireAfter) -> float:
@@ -162,7 +164,7 @@ def _merge_headers(session_headers: Mapping[str, Any],
 
 
 def _select_headers(headers: Mapping[str, str], *, match: bool | tuple[str, ...],
-                    ignored: Iterable[str]) -> Mapping[str, str] | None:
+                    ignored: Iterable[str]) -> dict[str, str] | None:
     if match is False:
         return None
     ignored_lower = {p.lower() for p in ignored}
@@ -455,7 +457,9 @@ class CachedSession(CacheMixin, niquests.Session):
         if only_if_cached:
             return _make_504(url)
         if entry is not None and s.cache_control:
-            _attach_validators(entry, kwargs)
+            validator_headers = _validator_headers(entry, kwargs.get('headers'))
+            if validator_headers is not None:
+                kwargs['headers'] = validator_headers
         resp = super().request(method, url, *args, **kwargs)
         if resp.status_code == HTTPStatus.NOT_MODIFIED.value and entry is not None:
             log.debug('304 Not Modified: refreshing cache entry for %s %s.', method_upper, url)
@@ -543,7 +547,9 @@ class AsyncCachedSession(CacheMixin, niquests.AsyncSession):
         if only_if_cached:
             return _make_504(url)
         if entry is not None and s.cache_control:
-            _attach_validators(entry, kwargs)
+            validator_headers = _validator_headers(entry, kwargs.get('headers'))
+            if validator_headers is not None:
+                kwargs['headers'] = validator_headers
         resp = cast('niquests.Response', await super().request(method, url, *args, **kwargs))
         if resp.status_code == HTTPStatus.NOT_MODIFIED.value and entry is not None:
             log.debug('304 Not Modified: refreshing cache entry for %s %s.', method_upper, url)
