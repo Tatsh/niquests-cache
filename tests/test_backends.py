@@ -41,6 +41,18 @@ def test_memory_backend_miss() -> None:
     assert MemoryBackend().get('missing') is None
 
 
+def test_memory_backend_get_returns_defensive_copy() -> None:
+    backend = MemoryBackend()
+    backend.set('k', _entry(b'mem'))
+    fetched = backend.get('k')
+    assert fetched is not None
+    original_url = fetched['url']
+    fetched['url'] = 'https://other.invalid/'
+    second = backend.get('k')
+    assert second is not None
+    assert second['url'] == original_url
+
+
 def test_file_backend_set_get(tmp_path: Path) -> None:
     backend = FileCache(tmp_path / 'fb')
     backend.set('abc', _entry(b'disk'))

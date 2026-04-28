@@ -1,7 +1,7 @@
 """In-memory cache backend."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from niquests_cache.backends.base import BaseBackend
 from typing_extensions import override
@@ -30,9 +30,12 @@ class MemoryBackend(BaseBackend):
         Returns
         -------
         CacheEntry | None
-            The stored entry, or ``None`` if the key is unknown.
+            A shallow copy of the stored entry, or ``None`` if the key is unknown. The copy
+            isolates callers from the backend's internal state so mutating the returned entry
+            does not silently update the cache.
         """
-        return self._store.get(key)
+        entry = self._store.get(key)
+        return None if entry is None else cast('CacheEntry', dict(entry))
 
     @override
     def set(self, key: str, entry: CacheEntry) -> None:
