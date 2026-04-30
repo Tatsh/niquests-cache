@@ -9,6 +9,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+## [0.2.4] - 2026-04-30
+
+### Changed
+
+- `MemoryBackend.get()` now returns a defensive copy of the stored entry so callers cannot mutate
+  the in-memory cache state without going through `set()`, matching the behaviour of the SQLite
+  and filesystem backends.
+- The session's request path no longer mutates the caller's `kwargs` to attach revalidation
+  headers; it now constructs and returns a fresh headers dictionary, in line with the project
+  rule about returning modified copies rather than mutating arguments.
+
+### Fixed
+
+- Development dependencies refreshed via `uv lock`, including a major-version bump of `cspell`
+  (9.8.0 to 10.0.0).
+
 ## [0.2.3] - 2026-04-25
 
 ### Fixed
@@ -149,7 +165,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `cached_session()` helper with optional `app_name` (for `platformdirs.user_cache_path`), `aio`,
   `no_cache`, and `expire_after`.
 
-[unreleased]: https://github.com/Tatsh/niquests-cache/compare/v0.2.2...HEAD
+[unreleased]: https://github.com/Tatsh/niquests-cache/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/Tatsh/niquests-cache/compare/v0.2.3...v0.2.4
+[0.2.3]: https://github.com/Tatsh/niquests-cache/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/Tatsh/niquests-cache/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/Tatsh/niquests-cache/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Tatsh/niquests-cache/compare/v0.1.1...v0.2.0
