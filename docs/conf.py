@@ -75,9 +75,10 @@ html_theme_options = {
     'toc_title_is_page_title': True
 }
 intersphinx_mapping = {
-    'aiosqlite': ('https://aiosqlite.omnilib.dev/en/stable', None),
-    'anyio': ('https://anyio.readthedocs.io/en/stable', None),
-    'niquests': ('https://niquests.readthedocs.io/en/latest', None),
-    'platformdirs': ('https://platformdirs.readthedocs.io/en/latest', None),
-    'python': ('https://docs.python.org/3', None)
+    'aiosqlite': ('https://aiosqlite.omnilib.dev/en/stable/', None),
+    'anyio': ('https://anyio.readthedocs.io/en/stable/', None),
+    'niquests': ('https://niquests.readthedocs.io/en/latest/', None),
+    'platformdirs': ('https://platformdirs.readthedocs.io/en/latest/', None),
+    'python': ('https://docs.python.org/3', None),
+    'typing-extensions': ('https://typing-extensions.readthedocs.io/en/latest/', None)
 }
