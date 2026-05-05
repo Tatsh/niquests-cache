@@ -6,6 +6,7 @@ local utils = import 'utils.libsonnet';
   version: '0.2.4',
   description: 'Cached niquests sessions with pluggable storage backends.',
   keywords: ['cache', 'filesystem', 'http', 'niquests'],
+  security_policy_supported_versions: { '0.2.x': ':white_check_mark:' },
   python_deps+: {
     main+: {
       aiosqlite: utils.latestPypiPackageVersionCaret('aiosqlite'),
