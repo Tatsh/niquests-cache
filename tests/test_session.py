@@ -32,10 +32,16 @@ def _key(method: str, url: str, headers: Mapping[str, str] | None = None) -> str
 
 def _session_headers(session: niquests.Session | niquests.AsyncSession,
                      extra: Mapping[str, str] | None = None) -> dict[str, str]:
-    raw: dict[str, Any] = dict(session.headers)
-    merged = {k: str(v) for k, v in raw.items() if v is not None}
+    raw = dict(session.headers)
+    merged = {
+        (k if isinstance(k, str) else k.decode()): str(v)
+        for k, v in raw.items() if v is not None
+    }
     if extra:
-        merged.update({k: str(v) for k, v in extra.items() if v is not None})
+        merged.update({
+            (k if isinstance(k, str) else k.decode()): str(v)
+            for k, v in extra.items() if v is not None
+        })
     return merged
 
 
