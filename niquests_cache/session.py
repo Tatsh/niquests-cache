@@ -191,7 +191,7 @@ def _default_key(method: str, url: str, headers: Mapping[str, str] | None) -> st
 def _response_from_entry(data: CacheEntry) -> niquests.Response:
     resp = niquests.Response()
     resp.status_code = data['status_code']
-    resp._content = data['content']  # noqa: SLF001
+    resp._content = data['content']  # ruff:ignore[private-member-access]
     resp.headers.update(data['headers'])
     resp.url = data['url']
     resp.encoding = data.get('encoding', 'utf-8')
@@ -233,7 +233,7 @@ def _resolve_backend(backend: BaseBackend | BackendAlias | None,
 def _make_504(url: str) -> niquests.Response:
     resp = niquests.Response()
     resp.status_code = 504
-    resp._content = b''  # noqa: SLF001
+    resp._content = b''  # ruff:ignore[private-member-access]
     resp.url = url
     resp.encoding = 'utf-8'
     return resp

@@ -37,7 +37,7 @@ class FileCache(BaseBackend):
                  extension: str = '',
                  lock: AbstractContextManager[Any] | None = None,
                  serializer: Serializer | str | None = None,
-                 **kwargs: Any) -> None:  # noqa: ARG002
+                 **kwargs: Any) -> None:  # ruff:ignore[unused-method-argument]
         path = Path(cache_name)
         if path.is_absolute():
             resolved = path
