@@ -50,8 +50,8 @@ def _mock_resp(content: bytes = b'body',
                status: int = 200) -> niquests.Response:
     resp = niquests.Response()
     resp.status_code = status
-    resp._content = content  # noqa: SLF001
-    resp._content_consumed = True  # noqa: SLF001
+    resp._content = content  # ruff:ignore[private-member-access]
+    resp._content_consumed = True  # ruff:ignore[private-member-access]
     resp.url = url
     resp.encoding = 'utf-8'
     return resp
@@ -212,7 +212,7 @@ def test_cached_session_serializer_invalid_object() -> None:
 
 def test_cached_session_serializer_partial_object() -> None:
     class HalfSer:
-        def dumps(self, entry: Any) -> bytes:  # noqa: PLR6301
+        def dumps(self, entry: Any) -> bytes:  # ruff:ignore[no-self-use]
             del entry
             return b''
 
@@ -222,11 +222,11 @@ def test_cached_session_serializer_partial_object() -> None:
 
 def test_cached_session_serializer_custom_object() -> None:
     class MySer:
-        def dumps(self, entry: Any) -> bytes:  # noqa: PLR6301
+        def dumps(self, entry: Any) -> bytes:  # ruff:ignore[no-self-use]
             del entry
             return b'x'
 
-        def loads(self, data: bytes) -> Any:  # noqa: PLR6301
+        def loads(self, data: bytes) -> Any:  # ruff:ignore[no-self-use]
             del data
             return _entry()
 
@@ -978,7 +978,7 @@ def test_cached_session_unconsumed_stream_not_cached(mocker: MockerFixture) -> N
     backend = MemoryBackend()
     session = CachedSession(backend=backend)
     resp = _mock_resp(b'', 'https://example.com/stream')
-    resp._content_consumed = False  # noqa: SLF001
+    resp._content_consumed = False  # ruff:ignore[private-member-access]
     mocker.patch.object(niquests.Session, 'request', return_value=resp)
     session.request('GET', 'https://example.com/stream')
     assert backend.get(_key('GET', 'https://example.com/stream')) is None
@@ -989,7 +989,7 @@ async def test_async_cached_session_unconsumed_stream_not_cached(mocker: MockerF
     backend = MemoryBackend()
     session = AsyncCachedSession(backend=backend)
     resp = _mock_resp(b'', 'https://example.com/astream')
-    resp._content_consumed = False  # noqa: SLF001
+    resp._content_consumed = False  # ruff:ignore[private-member-access]
     mocker.patch.object(niquests.AsyncSession, 'request', return_value=resp)
     await session.request('GET', 'https://example.com/astream')
     assert backend.get(_key('GET', 'https://example.com/astream')) is None

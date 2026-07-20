@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 import base64
 import json
-import pickle  # noqa: S403
+import pickle  # ruff:ignore[suspicious-pickle-import]
 
 if TYPE_CHECKING:
     from niquests_cache.typing import CacheEntry, Serializer
@@ -14,7 +14,7 @@ __all__ = ('JSONSerializer', 'PickleSerializer', 'resolve_serializer')
 
 class JSONSerializer:
     """Encodes :class:`CacheEntry` as UTF-8 JSON. Binary ``content`` is base64-encoded."""
-    def dumps(self, entry: CacheEntry) -> bytes:  # noqa: PLR6301
+    def dumps(self, entry: CacheEntry) -> bytes:  # ruff:ignore[no-self-use]
         """
         Serialise ``entry`` to JSON-encoded bytes.
 
@@ -32,7 +32,7 @@ class JSONSerializer:
         copy['content'] = base64.b64encode(entry['content']).decode()
         return json.dumps(copy).encode()
 
-    def loads(self, data: bytes) -> CacheEntry:  # noqa: PLR6301
+    def loads(self, data: bytes) -> CacheEntry:  # ruff:ignore[no-self-use]
         """
         Deserialise a JSON-encoded payload.
 
@@ -53,7 +53,7 @@ class JSONSerializer:
 
 class PickleSerializer:
     """Encodes :class:`CacheEntry` using :mod:`pickle`."""
-    def dumps(self, entry: CacheEntry) -> bytes:  # noqa: PLR6301
+    def dumps(self, entry: CacheEntry) -> bytes:  # ruff:ignore[no-self-use]
         """
         Serialise ``entry`` using :func:`pickle.dumps`.
 
@@ -69,7 +69,7 @@ class PickleSerializer:
         """
         return pickle.dumps(dict(entry))
 
-    def loads(self, data: bytes) -> CacheEntry:  # noqa: PLR6301
+    def loads(self, data: bytes) -> CacheEntry:  # ruff:ignore[no-self-use]
         """
         Deserialise a pickled payload.
 
@@ -83,7 +83,7 @@ class PickleSerializer:
         CacheEntry
             The decoded cache entry.
         """
-        return cast('CacheEntry', pickle.loads(data))  # noqa: S301
+        return cast('CacheEntry', pickle.loads(data))  # ruff:ignore[suspicious-pickle-usage]
 
 
 def resolve_serializer(value: str | Serializer | None) -> Serializer:
