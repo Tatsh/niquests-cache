@@ -1,8 +1,8 @@
 {
   "_wiswa": {
-    "commandLine": "wiswa",
-    "lastRun": "2026-05-02T21:48:27Z",
-    "version": "d02c95c"
+    "commandLine": "wiswa -d",
+    "lastRun": "2026-08-05T01:57:25Z",
+    "version": "149a6b0"
   },
   "contributors": ["Andrew Udvare <audvare@gmail.com>"],
   "cspell": {
@@ -43,7 +43,7 @@
   "devDependencies": {
     "@prettier/plugin-xml": "^3.4.2",
     "cspell": "^10.0.1",
-    "markdownlint-cli2": "^0.23.1",
+    "markdownlint-cli2": "^0.23.2",
     "prettier": "^3.9.6",
     "prettier-plugin-ini": "^1.3.0",
     "prettier-plugin-sort-json": "^4.2.0",
@@ -75,7 +75,7 @@
     "showFound": true
   },
   "name": "niquests-cache",
-  "packageManager": "yarn@4.14.1",
+  "packageManager": "yarn@4.18.0",
   "prettier": {
     "endOfLine": "lf",
     "iniSpaceAroundEquals": true,
@@ -100,7 +100,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:Tatsh/niquests-cache.git"
+    "url": "git+https://github.com/Tatsh/niquests-cache.git"
   },
   "scripts": {
     "check-formatting": "prettier --check . && uv run yapf --diff --parallel --recursive . && markdownlint-cli2 --config package.json --configPointer /markdownlint-cli2",
