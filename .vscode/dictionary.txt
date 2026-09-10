@@ -1,6 +1,5 @@
 aget
 aiosqlite
-Ångström
 anyio
 appauthor
 appimage
@@ -14,7 +13,6 @@ bsky
 cdrommsf
 commitizen
 conftest
-cooldown
 coveragerc
 coverallsapp
 ctypes
@@ -61,13 +59,18 @@ myproject
 mypy
 namedtuples
 niquests
+noone
+noqa
 norecursedirs
+nullglob
 numpy
+numpydoc
 oneline
 pathlib
 pavelzw
 platformdirs
 plistlib
+popen
 preapproved
 pycache
 pydantic
@@ -84,6 +87,7 @@ regen
 resp
 ripgreprc
 rstcheck
+sbclaude
 schemafile
 sdist
 serialiser
@@ -91,6 +95,7 @@ serialisers
 setattr
 shellcheck
 shellformat
+shopt
 snapcraft
 soupsieve
 sphinxcontrib
@@ -119,3 +124,4 @@ yapf
 yapfignore
 yarnrc
 zizmor
+Ångström

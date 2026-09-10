@@ -6,13 +6,15 @@ from tempfile import gettempdir
 from time import time
 from typing import TYPE_CHECKING, Any
 
-from niquests_cache.backends import FileCache, MemoryBackend, SQLiteBackend
-from niquests_cache.serializers import PickleSerializer
 import pytest
 
+from niquests_cache.backends import FileCache, MemoryBackend, SQLiteBackend
+from niquests_cache.serializers import PickleSerializer
+
 if TYPE_CHECKING:
-    from niquests_cache.typing import CacheEntry
     from pytest_mock import MockerFixture
+
+    from niquests_cache.typing import CacheEntry
 
 
 def _entry(content: bytes = b'hi',

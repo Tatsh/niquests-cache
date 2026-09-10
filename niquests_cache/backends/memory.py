@@ -3,8 +3,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from niquests_cache.backends.base import BaseBackend
 from typing_extensions import override
+
+from niquests_cache.backends.base import BaseBackend
 
 if TYPE_CHECKING:
     from niquests_cache.typing import CacheEntry

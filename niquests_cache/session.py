@@ -12,12 +12,13 @@ import json
 import logging
 import re
 
-from niquests_cache.backends import BaseBackend, FileCache, MemoryBackend, SQLiteBackend
-from niquests_cache.serializers import resolve_serializer
-from niquests_cache.settings import CacheSettings
 from typing_extensions import override
 import niquests
 import platformdirs
+
+from niquests_cache.backends import BaseBackend, FileCache, MemoryBackend, SQLiteBackend
+from niquests_cache.serializers import resolve_serializer
+from niquests_cache.settings import CacheSettings
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable, Iterable, Iterator, Mapping

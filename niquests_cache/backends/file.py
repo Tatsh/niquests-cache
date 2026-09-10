@@ -9,11 +9,12 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 import contextlib
 import logging
 
-from niquests_cache.backends.base import BaseBackend
-from niquests_cache.serializers import resolve_serializer
 from typing_extensions import override
 import anyio
 import platformdirs
+
+from niquests_cache.backends.base import BaseBackend
+from niquests_cache.serializers import resolve_serializer
 
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager

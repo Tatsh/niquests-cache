@@ -8,9 +8,10 @@ import re
 import sqlite3
 import weakref
 
-from niquests_cache.backends.base import BaseBackend
 from typing_extensions import override
 import aiosqlite
+
+from niquests_cache.backends.base import BaseBackend
 
 if TYPE_CHECKING:
     from niquests_cache.backends.file import StrPath

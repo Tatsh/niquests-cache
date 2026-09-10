@@ -19,7 +19,6 @@
 .eslintignore
 .pnp.*
 .shellcheckrc
-.venv/
 /.bash_profile
 /.bashrc
 /.claude/auto-continue.md
@@ -40,6 +39,8 @@
 /.mcp.json
 /.profile
 /.ripgreprc
+/.sbclaude-venv/
+/.venv/
 /.wiswa-ci/
 /.yarn/**/*.cjs
 /.yarn/install-state.gz

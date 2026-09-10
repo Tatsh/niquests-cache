@@ -8,18 +8,20 @@ from typing import TYPE_CHECKING, Any, cast
 import json
 import re
 
+import niquests
+import pytest
+
 from niquests_cache import AsyncCachedSession, CachedSession, cached_session
 from niquests_cache.backends import FileCache, MemoryBackend, SQLiteBackend
 from niquests_cache.serializers import JSONSerializer, PickleSerializer
-import niquests
-import pytest
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
     from pathlib import Path
 
-    from niquests_cache.typing import CacheEntry
     from pytest_mock import MockerFixture
+
+    from niquests_cache.typing import CacheEntry
 
 
 def _key(method: str, url: str, headers: Mapping[str, str] | None = None) -> str:
