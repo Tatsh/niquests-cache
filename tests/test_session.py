@@ -1,7 +1,7 @@
 """Tests for :mod:`niquests_cache.session`."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from time import time
 from typing import TYPE_CHECKING, Any, cast
@@ -477,7 +477,7 @@ def test_cached_session_expire_after_seconds(mocker: MockerFixture) -> None:
 
 
 def test_cached_session_expire_after_datetime() -> None:
-    future = datetime.now(tz=timezone.utc) + timedelta(hours=1)
+    future = datetime.now(tz=UTC) + timedelta(hours=1)
     session = CachedSession(backend=MemoryBackend(), expire_after=future)
     assert session.settings.expire_after == future
 
@@ -603,7 +603,7 @@ def test_cached_session_expire_after_none_means_never(mocker: MockerFixture) -> 
 
 
 def test_cached_session_request_with_datetime_expire(mocker: MockerFixture) -> None:
-    future = datetime.now(tz=timezone.utc) + timedelta(hours=1)
+    future = datetime.now(tz=UTC) + timedelta(hours=1)
     backend = MemoryBackend()
     backend.set(_key('GET', 'https://example.com/dt'), _entry(b'in-window',
                                                               'https://example.com/dt'))
