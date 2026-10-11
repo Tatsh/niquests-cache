@@ -21,7 +21,7 @@ from niquests_cache.serializers import resolve_serializer
 from niquests_cache.settings import CacheSettings
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Callable, Iterable, Iterator, Mapping
+    from collections.abc import AsyncGenerator, Callable, Generator, Iterable, Mapping
 
     from niquests_cache.backends.file import StrPath
     from niquests_cache.typing import BackendAlias, CacheEntry, ExpireAfter, Serializer
@@ -386,7 +386,7 @@ class CacheMixin:
 class CachedSession(CacheMixin, niquests.Session):
     """Synchronous cached :mod:`niquests` session."""
     @contextlib.contextmanager
-    def cache_disabled(self) -> Iterator[None]:
+    def cache_disabled(self) -> Generator[None, None, None]:
         """
         Temporarily disable caching for the duration of the ``with`` block.
 
@@ -476,7 +476,7 @@ class CachedSession(CacheMixin, niquests.Session):
 class AsyncCachedSession(CacheMixin, niquests.AsyncSession):
     """Asynchronous cached :mod:`niquests` session."""
     @contextlib.asynccontextmanager
-    async def cache_disabled(self) -> AsyncIterator[None]:
+    async def cache_disabled(self) -> AsyncGenerator[None, None]:
         """
         Temporarily disable caching for the duration of the ``async with`` block.
 
