@@ -402,7 +402,7 @@ class CachedSession(CacheMixin, niquests.Session):
         finally:
             self.settings.disabled = prev
 
-    def request(  # type: ignore[override]
+    def request(  # type: ignore[override] # ty: ignore[incompatible-method-override]
             self,
             method: str,
             url: str,
@@ -492,7 +492,7 @@ class AsyncCachedSession(CacheMixin, niquests.AsyncSession):
         finally:
             self.settings.disabled = prev
 
-    async def request(  # type: ignore[override] # ty: ignore[invalid-method-override]
+    async def request(  # type: ignore[override] # ty: ignore[incompatible-method-override]
             self,
             method: str,
             url: str,
@@ -607,7 +607,7 @@ class _NoCacheAsyncSession(niquests.AsyncSession):
     without raising :py:class:`TypeError`.
     """
     @override
-    async def request(  # type: ignore[override] # ty: ignore[invalid-method-override]
+    async def request(  # type: ignore[override] # ty: ignore[incompatible-method-override]
             self, method: str, url: str, *args: Any, **kwargs: Any) -> niquests.Response:
         """
         Send an async request, dropping cache-only kwargs before delegating to the parent.
