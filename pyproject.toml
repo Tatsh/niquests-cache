@@ -4,11 +4,11 @@ requires = ["hatchling"]
 
 [dependency-groups]
 dev = [
-  "commitizen>=4.19.0",
+  "commitizen>=4.19.4",
   "cz-path>=0.0.7",
-  "mypy>=2.3.1",
-  "ruff==0.17.5",
-  "ty>=0.0.84",
+  "mypy>=2.4.1",
+  "ruff==0.17.6",
+  "ty>=0.0.107",
   "yapf>=0.43.0"
 ]
 docs = [
@@ -18,16 +18,16 @@ docs = [
   "esbonio>=2.1.0",
   "restructuredtext-lint>=2.0.2",
   "sphinx-datatables>=1.0.0",
-  "sphinx-immaterial>=0.13.9",
-  "sphinx>=9.1.0; python_version >= \"3.13\""
+  "sphinx-immaterial>=0.13.12",
+  "sphinx>=9.2.0; python_version >= \"3.13\""
 ]
 tests = [
   "coveralls>=4.1.0",
   "mock>=5.2.0",
-  "pytest-asyncio>=1.4.0",
+  "pytest-asyncio>=1.5.0",
   "pytest-cov>=7.1.0",
-  "pytest-mock>=3.16.0",
-  "pytest>=9.1.1"
+  "pytest-mock>=3.17.0",
+  "pytest>=9.2.0"
 ]
 
 [project]
@@ -43,9 +43,9 @@ classifiers = [
 ]
 dependencies = [
   "aiosqlite>=0.22.1",
-  "anyio>=4.15.1",
-  "niquests>=3.21.2",
-  "platformdirs>=4.12.0",
+  "anyio>=4.16.0",
+  "niquests>=3.21.3",
+  "platformdirs>=4.14.7",
   "typing-extensions>=4.16.0"
 ]
 description = "Cached niquests sessions with pluggable storage backends."
@@ -53,7 +53,7 @@ keywords = ["cache", "filesystem", "http", "niquests"]
 license = "MIT"
 name = "niquests-cache"
 readme = "README.md"
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.11.5,<4.0"
 version = "0.2.4"
 
 [[project.authors]]
